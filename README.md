@@ -1,4 +1,8 @@
-# Sugar Log
+# Meetha Kam Karo (मीठा कम करो)
+
+*"Eat less sweet!" — the line every caring Indian mom says. Your sugar's caring (and slightly naggy) buddy.*
+
+Live at **https://trinayanbhatt.github.io/sugar-log/**
 
 A small offline app for logging blood sugar readings on an Android phone:
 before each meal, 2 hours after each meal, and random checks during the day.
@@ -32,7 +36,7 @@ before each meal, 2 hours after each meal, and random checks during the day.
   14:00, 21:00). Two kinds of alert:
   - **⏰ Phone alarm (most reliable):** on Android, tap ⏰ next to a time to open
     the Clock app with that alarm filled in, then set it to repeat daily. It
-    rings even when Sugar Log is closed.
+    rings even when Meetha Kam Karo is closed.
   - **🔔 App notifications:** alerts for due medicines and 2-hour sugar checks,
     but only while the app is open or was used recently. A web app can't
     schedule alerts while it's fully closed.
@@ -54,7 +58,7 @@ HTTPS. The simplest free options:
 2. **GitHub Pages:** push this folder to a repository and turn on Pages.
 
 Then on the phone, open the link in **Chrome**, tap **⋮ → Add to Home screen /
-Install app**, and open Sugar Log from the home screen.
+Install app**, and open Meetha Kam Karo from the home screen.
 
 Quick test on your home Wi-Fi (no install or offline support):
 

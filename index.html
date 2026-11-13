@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="Log blood sugar readings before and after meals, with a daily timesheet and progress tracking.">
-<title>Sugar Log</title>
+<title>Meetha Kam Karo</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -218,7 +218,7 @@ td .miss{color:var(--border);font-weight:700}
 </head>
 <body>
 <header><div class="hdr">
-  <div style="flex:1;min-width:0"><h1 data-i18n="appName">Sugar Log</h1><div class="sub" id="hdrSub"></div></div>
+  <div style="flex:1;min-width:0"><h1 data-i18n="appName">Meetha Kam Karo</h1><div class="sub" id="hdrSub"></div></div>
   <button class="hdr-btn lang" id="langBtn" data-i18n="lang_btn" data-i18n-aria="lang_aria">हिंदी</button>
   <button class="hdr-btn" data-view="settings" data-i18n-aria="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </div></header>
@@ -287,7 +287,7 @@ td .miss{color:var(--border);font-weight:700}
    ===================================================================== */
 const I18N = {
   en: {
-    appName: 'Sugar Log', lang_btn: 'हिंदी', lang_aria: 'Switch language to Hindi', lang_switched: 'Language: English',
+    appName: 'Meetha Kam Karo', lang_btn: 'हिंदी', lang_aria: 'Switch language to Hindi', lang_switched: 'Language: English',
     nav_today: 'Today', nav_sheet: 'Timesheet', nav_add: 'Add', nav_meds: 'Meds', nav_stats: 'Progress', settings: 'Settings',
     add_reading_aria: 'Add a reading', add_due_aria: 'Add a reading — 2-hr after {meal} is due', due_badge: 'Due',
     meal_b: 'Breakfast', meal_l: 'Lunch', meal_d: 'Dinner',
@@ -340,7 +340,7 @@ const I18N = {
     add_meds_text: 'Choose when you take each one — morning before breakfast, after lunch or after dinner — then tick them off every day.',
     add_med_btn: '+ Add medicine', todays_meds: "Today's medicines", todays_doses: "Today's doses", my_meds: 'My medicines',
     reminder_times: '⏰ Reminder times', set_alarm_aria: 'Set a phone alarm for {slot}',
-    app_notifs: '🔔 App notifications', app_notifs_sub: 'Alerts for medicines and sugar checks while Sugar Log is open or recently used',
+    app_notifs: '🔔 App notifications', app_notifs_sub: 'Alerts for medicines and sugar checks while Meetha Kam Karo is open or recently used',
     alarm_hint_android: 'For a reminder that always rings — even when the app is closed — tap ⏰ to create an alarm in your Clock app, then set it to repeat daily.',
     alarm_hint_other: 'On your Android phone, a ⏰ button appears here to create a daily alarm in the Clock app.',
     time_set: '{slot} time set to {t}', last_7_title: 'Last 7 days',
@@ -359,15 +359,15 @@ const I18N = {
     data_note: '{n} readings saved on this phone only. Back up regularly — clearing browser data deletes them.',
     data_note_1: '1 reading saved on this phone only. Back up regularly — clearing browser data deletes it.',
     export_csv: 'Export CSV (Excel)', meds_csv: 'Medicines CSV', backup: 'Backup file', restore: 'Restore backup', delete_all: 'Delete all',
-    footer: 'Sugar Log · for personal tracking, not medical advice.', saved: 'Saved', targets_reset: 'Targets reset',
+    footer: 'Meetha Kam Karo · your sugar\'s caring (and slightly naggy) buddy. For personal tracking, not medical advice.', saved: 'Saved', targets_reset: 'Targets reset',
     confirm_clear: 'Delete all {n} readings? This cannot be undone. Export a backup first if unsure.', all_deleted: 'All readings deleted',
-    restored: 'Restored {n} readings', bad_backup: 'That file is not a Sugar Log backup', storage_fail: 'Could not save — browser storage is unavailable',
+    restored: 'Restored {n} readings', bad_backup: 'That file is not a Meetha Kam Karo backup', storage_fail: 'Could not save — browser storage is unavailable',
     csv_date: 'Date', csv_time: 'Time', csv_type: 'Reading type', csv_value: 'Value ({u})', csv_mg: 'Value (mg/dL)', csv_status: 'Status',
     csv_note: 'Note', csv_med: 'Medicine', csv_dose: 'Dose', csv_taken_at: 'Taken at', csv_taken: 'Taken', csv_due: 'Due',
     fmt_hm: '{h}h {m}m', fmt_min: '{m} min',
   },
   hi: {
-    appName: 'शुगर लॉग', lang_btn: 'English', lang_aria: 'भाषा अंग्रेज़ी में बदलें', lang_switched: 'भाषा: हिंदी',
+    appName: 'मीठा कम करो', lang_btn: 'English', lang_aria: 'भाषा अंग्रेज़ी में बदलें', lang_switched: 'भाषा: हिंदी',
     nav_today: 'आज', nav_sheet: 'टाइमशीट', nav_add: 'जोड़ें', nav_meds: 'दवाइयाँ', nav_stats: 'प्रगति', settings: 'सेटिंग्स',
     add_reading_aria: 'रीडिंग जोड़ें', add_due_aria: 'रीडिंग जोड़ें — {meal} के 2 घंटे बाद वाली रीडिंग का समय हो गया है', due_badge: 'अभी',
     meal_b: 'नाश्ता', meal_l: 'दोपहर का खाना', meal_d: 'रात का खाना',
@@ -439,9 +439,9 @@ const I18N = {
     data_note: '{n} रीडिंग सिर्फ़ इसी फ़ोन में सेव हैं। नियमित बैकअप लें — ब्राउज़र डेटा मिटाने पर ये हट जाएँगी।',
     data_note_1: '1 रीडिंग सिर्फ़ इसी फ़ोन में सेव है। नियमित बैकअप लें — ब्राउज़र डेटा मिटाने पर यह हट जाएगी।',
     export_csv: 'CSV निर्यात (Excel)', meds_csv: 'दवाइयों की CSV', backup: 'बैकअप फ़ाइल', restore: 'बैकअप वापस लाएँ', delete_all: 'सब हटाएँ',
-    footer: 'शुगर लॉग · निजी रिकॉर्ड के लिए, यह चिकित्सा सलाह नहीं है।', saved: 'सेव हुआ', targets_reset: 'लक्ष्य डिफ़ॉल्ट पर लौटे',
+    footer: 'मीठा कम करो · आपकी शुगर का फ़िक्रमंद (और थोड़ा टोकने वाला) साथी। निजी रिकॉर्ड के लिए, यह चिकित्सा सलाह नहीं है।', saved: 'सेव हुआ', targets_reset: 'लक्ष्य डिफ़ॉल्ट पर लौटे',
     confirm_clear: 'सभी {n} रीडिंग हटाएँ? यह वापस नहीं होगा। पक्का न हों तो पहले बैकअप लें।', all_deleted: 'सभी रीडिंग हटा दी गईं',
-    restored: '{n} रीडिंग वापस लाई गईं', bad_backup: 'यह शुगर लॉग की बैकअप फ़ाइल नहीं है', storage_fail: 'सेव नहीं हो सका — ब्राउज़र स्टोरेज उपलब्ध नहीं है',
+    restored: '{n} रीडिंग वापस लाई गईं', bad_backup: 'यह मीठा कम करो की बैकअप फ़ाइल नहीं है', storage_fail: 'सेव नहीं हो सका — ब्राउज़र स्टोरेज उपलब्ध नहीं है',
     csv_date: 'तारीख़', csv_time: 'समय', csv_type: 'रीडिंग का प्रकार', csv_value: 'मान ({u})', csv_mg: 'मान (mg/dL)', csv_status: 'स्थिति',
     csv_note: 'नोट', csv_med: 'दवाई', csv_dose: 'खुराक', csv_taken_at: 'कब ली', csv_taken: 'ली', csv_due: 'बाकी',
     fmt_hm: '{h} घं {m} मि', fmt_min: '{m} मिनट',
@@ -849,7 +849,7 @@ function exportMedsCsv() {
       rows.push([k, `${doseLabel(s.id)} (${S().medTimes[s.id]})`, m.name, m.dose || '', tk ? t('csv_taken') : st === 'up' ? t('tag_up') : st === 'due' ? t('csv_due') : t('tag_missed'), tk ? timeStr(tk.ts) : '']);
     }
   }
-  download(`sugar-log-medicines-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n'), 'text/csv');
+  download(`meetha-kam-karo-medicines-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n'), 'text/csv');
 }
 
 /* ---------- TODAY ---------- */
@@ -1127,7 +1127,7 @@ document.getElementById('v-settings').addEventListener('click', e => {
     case 'resetTargets': Object.assign(S(), { low: DEFAULTS.low, preMin: DEFAULTS.preMin, preMax: DEFAULTS.preMax, postMax: DEFAULTS.postMax, veryHigh: DEFAULTS.veryHigh }); save(); renderSettings(); toast(t('targets_reset')); break;
     case 'exportCsv': exportCsv(); break;
     case 'exportMeds': exportMedsCsv(); break;
-    case 'exportJson': download(`sugar-log-backup-${todayKey()}.json`, JSON.stringify(db, null, 1), 'application/json'); break;
+    case 'exportJson': download(`meetha-kam-karo-backup-${todayKey()}.json`, JSON.stringify(db, null, 1), 'application/json'); break;
     case 'importJson': $('#importFile').click(); break;
     case 'clearAll':
       if (confirm(t('confirm_clear', { n: db.readings.length }))) { db.readings = []; save(); renderSettings(); toast(t('all_deleted')); }
@@ -1152,7 +1152,7 @@ function exportCsv() {
   const rows = [[t('csv_date'), t('csv_time'), t('csv_type'), t('csv_value', { u: unitLabel() }), t('csv_mg'), t('csv_status'), t('csv_note')]];
   [...db.readings].sort((a, b) => a.ts - b.ts).forEach(r => rows.push([dayKey(r.ts), timeStr(r.ts), slotLabel(r.slot), fmt(r.mg), Math.round(r.mg), stText(classify(r.mg, r.slot)), r.note || '']));
   // ﻿ makes Excel open Hindi text correctly
-  download(`sugar-log-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n'), 'text/csv');
+  download(`meetha-kam-karo-readings-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n'), 'text/csv');
 }
 function download(name, text, type) {
   const a = document.createElement('a');

@@ -1,7 +1,7 @@
 {
-  "name": "Sugar Log",
-  "short_name": "Sugar Log",
-  "description": "Log blood sugar before and 2 hours after meals, with a daily timesheet and progress tracking.",
+  "name": "Meetha Kam Karo",
+  "short_name": "Meetha Kam",
+  "description": "Your sugar's caring (and slightly naggy) buddy: log blood sugar before and after meals, track medicines and see your progress.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
