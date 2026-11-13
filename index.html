@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f97316">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Log blood sugar readings before and after meals, with a daily timesheet and progress tracking.">
+<title>Sugar Log</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#fffaf0; --card:#ffffff; --text:#2b1a08; --muted:#7c6a55; --border:#f3e3c8;
+  --accent:#ea580c; --accent-2:#facc15; --accent-soft:#fff3d6; --on-accent:#3a1700;
+  --ok:#15803d; --ok-bg:#dcfce7; --low:#7c3aed; --low-bg:#ede9fe;
+  --high:#dc2626; --high-bg:#fee2e2; --vhigh:#7f1d1d; --vhigh-bg:#fecaca;
+  --track:#f8ead2; --shadow:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(100deg,#f97316 0%,#fb923c 45%,#facc15 100%);color:var(--on-accent);padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
+header h1{margin:0;font-size:19px;font-weight:650;letter-spacing:.2px}
+header .sub{font-size:13px;opacity:.85}
+main{max-width:720px;margin:0 auto;padding:14px 16px 40px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 10px;font-size:15px;font-weight:650}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.row{display:flex;align-items:center;gap:8px} .spacer{flex:1}
+button{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;padding:9px 14px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.danger{color:var(--vhigh);border-color:var(--vhigh)}
+button.ghost{border-color:transparent;background:transparent}
+button:active{transform:scale(.98)}
+
+/* progress */
+.bar{height:12px;background:var(--track);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:99px;transition:width .4s}
+.bar.thin{height:7px}
+.bar.ok>i{background:var(--ok)} .bar.warn>i{background:var(--high)}
+.big-pct{font-size:30px;font-weight:700;line-height:1}
+.stack{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--track)}
+.stack>i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* due banner */
+.due{display:flex;align-items:center;gap:10px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.due.over{background:var(--high-bg);border-color:var(--high)}
+.due .t{flex:1;font-size:14px}
+
+/* meal slots */
+.meal{display:grid;grid-template-columns:84px 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--border)}
+.meal:first-of-type{border-top:0}
+.meal .name{font-weight:600;font-size:14px}
+.slot{border:1.5px dashed var(--border);border-radius:11px;padding:8px 10px;min-height:54px;text-align:left;background:transparent;display:flex;flex-direction:column;justify-content:center}
+.slot .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.slot .v{font-size:18px;font-weight:700}
+.slot .v small{font-size:11px;font-weight:500;color:var(--muted)}
+.slot.filled{border-style:solid}
+.slot.empty .v{font-size:14px;font-weight:600;color:var(--accent)}
+.s-ok{background:var(--ok-bg)!important;border-color:var(--ok)!important}
+.s-low{background:var(--low-bg)!important;border-color:var(--low)!important}
+.s-high{background:var(--high-bg)!important;border-color:var(--high)!important}
+.s-vhigh{background:var(--vhigh-bg)!important;border-color:var(--vhigh)!important}
+.c-ok{color:var(--ok)} .c-low{color:var(--low)} .c-high{color:var(--high)} .c-vhigh{color:var(--vhigh)}
+.chiplist{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:99px;padding:5px 11px;font-size:13.5px;background:transparent}
+.pill b{font-size:15px}
+
+/* timesheet */
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:10px}
+.seg button{white-space:nowrap;padding:7px 12px;font-size:13.5px;border-radius:99px}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+thead th{position:sticky;top:0;background:var(--card);font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;line-height:1.2}
+th.meal-h{border-bottom:0;padding-bottom:0}
+td.date,th.date{position:sticky;left:0;background:var(--card);text-align:left;z-index:1;border-right:1px solid var(--border)}
+td.date b{display:block;font-size:13.5px} td.date span{font-size:11.5px;color:var(--muted)}
+tr.today td{background:var(--accent-soft)}
+td.cell{cursor:pointer;min-width:52px}
+td.cell .val{display:inline-block;min-width:40px;padding:4px 6px;border-radius:7px;font-weight:650;border:1px solid transparent}
+td.cell .add{color:var(--border);font-size:18px;line-height:1}
+td.rand{white-space:normal;min-width:90px}
+td.rand .val{margin:1px;font-size:12.5px;padding:2px 5px}
+td.done{min-width:70px} td.done .bar{margin-top:3px}
+tbody tr:last-child td{border-bottom:0}
+
+/* stats */
+.stat{margin-bottom:14px}
+.stat:last-child{margin-bottom:0}
+.stat .row{margin-bottom:5px;font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.kpi .n{font-size:22px;font-weight:700}
+.kpi .l{font-size:12px;color:var(--muted)}
+svg text{fill:var(--muted);font-size:9px}
+
+/* settings */
+.field{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--border)}
+.field:first-of-type{border-top:0}
+.field input[type=number]{width:84px}
+input,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 10px;width:100%}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--card);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -4px 16px rgba(120,60,0,.06)}
+nav button{flex:1;border:0;border-radius:0;background:transparent;padding:9px 4px 8px;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--accent);font-weight:600}
+/* centre Add button */
+nav button.add{position:relative;white-space:nowrap;color:var(--accent);font-weight:700;font-size:12px;overflow:visible}
+nav button.add .gap{height:22px}
+nav button.add .circle{position:absolute;left:50%;top:-34px;transform:translateX(-50%);width:70px;height:70px;border-radius:50%;
+  background:linear-gradient(140deg,#f97316 0%,#fb923c 50%,#facc15 100%);border:5px solid var(--card);
+  box-shadow:0 8px 20px rgba(234,88,12,.45),0 2px 4px rgba(234,88,12,.25);display:grid;place-items:center;transition:transform .15s}
+nav button.add .circle svg{width:32px;height:32px;stroke:#fff;stroke-width:3.2}
+nav button.add:active .circle{transform:translateX(-50%) scale(.92)}
+nav button.add.attention .circle::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:3px solid #f97316;animation:ring 1.6s ease-out infinite}
+nav button.add .badge{position:absolute;top:-38px;left:calc(50% + 20px);background:#dc2626;color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px;border:2px solid var(--card);z-index:1}
+@keyframes ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.45);opacity:0}}
+@media (prefers-reduced-motion: reduce){nav button.add.attention .circle::after{animation:none;opacity:.8}}
+
+/* dialog */
+dialog{border:0;padding:0;border-radius:18px 18px 0 0;width:100%;max-width:560px;margin:auto auto 0;background:var(--card);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog form{padding:18px 16px calc(16px + env(safe-area-inset-bottom))}
+dialog h3{margin:0 0 12px;font-size:17px}
+dialog label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+.valin{display:flex;align-items:center;gap:8px}
+.valin input{font-size:28px;font-weight:700;padding:8px 12px}
+.valin span{color:var(--muted);font-size:14px;white-space:nowrap}
+#fStatus{min-height:20px;font-size:13px;font-weight:600;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:7px 11px;font-size:13.5px;border-radius:99px}
+.chips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.toast{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1f2937;color:#fff;padding:9px 16px;border-radius:99px;font-size:14px;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+/* ---------- header button ---------- */
+.hdr{display:flex;align-items:center;gap:10px}
+.hdr-btn{background:rgba(255,255,255,.4);border:0;border-radius:12px;padding:8px;color:var(--on-accent);display:grid;place-items:center}
+.hdr-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hdr-btn.on{background:#fff}
+nav button{position:relative}
+nav button .dot{position:absolute;top:5px;left:calc(50% + 7px);width:10px;height:10px;border-radius:50%;background:#dc2626;border:2px solid var(--card)}
+/* ---------- medicines ---------- */
+.slot-h{display:flex;align-items:center;gap:8px;margin:16px 0 2px;font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.slot-h.first{margin-top:6px}
+.tag{font-size:11px;font-weight:700;border-radius:99px;padding:2px 9px;text-transform:none;letter-spacing:0}
+.tag.due{background:var(--accent);color:#fff}.tag.done{background:var(--ok-bg);color:var(--ok)}
+.tag.up{background:var(--track);color:var(--muted)}.tag.missed{background:var(--high-bg);color:var(--high)}
+.dose{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--border)}
+.slot-h + .dose{border-top:0}
+.dose .info{flex:1;min-width:0}
+.dose .nm{font-weight:650}
+.dose .meta{font-size:12.5px;color:var(--muted)}
+.tick{width:46px;height:46px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;padding:0;background:var(--card);flex:none;transition:background-color .2s,border-color .2s,transform .15s}
+.tick svg{width:24px;height:24px;stroke:var(--border);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tick.done{background:var(--ok);border-color:var(--ok)}.tick.done svg{stroke:#fff}
+.tick.due{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}.tick.due svg{stroke:var(--accent)}
+.tick:active{transform:scale(.9)}
+.medrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);cursor:pointer}
+.medrow:first-of-type{border-top:0}
+.pillicon{width:40px;height:40px;border-radius:12px;background:linear-gradient(140deg,#fed7aa,#fef08a);display:grid;place-items:center;flex:none;font-size:19px}
+.alarm{display:grid;place-items:center;width:44px;height:42px;border-radius:10px;border:1px solid var(--border);text-decoration:none;font-size:19px;background:var(--card);flex:none}
+.field input[type=time]{width:136px;padding:9px 8px}
+.mark{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 4px;border-radius:99px;font-size:12.5px;font-weight:700}
+.mark.y{background:var(--ok-bg);color:var(--ok)}.mark.n{background:var(--high-bg);color:var(--high)}.mark.p{color:var(--muted)}
+.setup{display:flex;align-items:center;gap:12px}
+/* ---------- animations ---------- */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes popIn{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes dotIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes bounce{0%{transform:translateY(0)}35%{transform:translateY(-5px)}65%{transform:translateY(1px)}100%{transform:none}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.0)}50%{box-shadow:0 0 0 6px rgba(220,38,38,.12)}}
+@keyframes fall{to{transform:translate(var(--x),110vh) rotate(var(--r));opacity:.85}}
+@keyframes shine{from{background-position:0% 50%}to{background-position:100% 50%}}
+.enter > *{animation:fadeUp .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0ms)}
+.enter .bar>i:not(.live){transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0ms) + 180ms)}
+.enter .stack{transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0ms) + 180ms)}
+.enter tbody tr{animation:fadeIn .4s ease both;animation-delay:calc(var(--r,0ms) + 160ms)}
+.enter .slot,.enter .pill{animation:popIn .45s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(var(--d,0ms) + var(--s,0ms) + 120ms)}
+.enter svg .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.3s .35s ease-out forwards}
+.enter svg circle{transform-box:fill-box;transform-origin:center;animation:dotIn .35s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--d,0ms) + 400ms + var(--c,0ms))}
+.bar>i.live{transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.pop{animation:popIn .55s cubic-bezier(.3,1.5,.5,1)!important}
+.due.over{animation:glow 2s ease-in-out infinite}
+dialog[open]{animation:sheetUp .32s cubic-bezier(.2,.8,.2,1)}
+dialog[open]::backdrop{animation:fadeIn .3s ease}
+.toast{transform:translate(-50%,14px);transition:opacity .25s,transform .3s cubic-bezier(.2,.8,.2,1)}
+.toast.show{transform:translate(-50%,0)}
+nav button.on svg{animation:bounce .45s ease}
+header{background-size:200% 100%!important;animation:shine 8s ease-in-out infinite alternate}
+.chips button,.seg button,.slot,.pill,td.cell .val{transition:background-color .2s,border-color .2s,color .2s,transform .15s}
+.slot:active,.pill:active,td.cell:active .val{transform:scale(.95)}
+.confetti{position:fixed;top:-14px;width:9px;height:14px;border-radius:2px;z-index:60;pointer-events:none;animation:fall var(--t,1.8s) cubic-bezier(.3,.6,.6,1) forwards}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.hdr-btn.lang{font:700 13px/1 system-ui,sans-serif;padding:0 11px;height:38px;white-space:nowrap}
+.when{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);font-size:14px;line-height:1.4}
+nav button.add:focus-visible{outline:none}
+nav button.add:focus-visible .circle{outline:3px solid var(--accent);outline-offset:3px}
+td .miss{color:var(--border);font-weight:700}
+.hidden{display:none!important}
+.empty-state{text-align:center;padding:22px 10px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><div class="hdr">
+  <div style="flex:1;min-width:0"><h1 data-i18n="appName">Sugar Log</h1><div class="sub" id="hdrSub"></div></div>
+  <button class="hdr-btn lang" id="langBtn" data-i18n="lang_btn" data-i18n-aria="lang_aria">हिंदी</button>
+  <button class="hdr-btn" data-view="settings" data-i18n-aria="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</div></header>
+
+<main>
+  <section id="v-today"></section>
+  <section id="v-sheet" class="hidden"></section>
+  <section id="v-stats" class="hidden"></section>
+  <section id="v-meds" class="hidden"></section>
+  <section id="v-settings" class="hidden"></section>
+</main>
+
+<nav>
+  <button data-view="today" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span data-i18n="nav_today">Today</span></button>
+  <button data-view="sheet"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12M8 2v4M16 2v4"/></svg><span data-i18n="nav_sheet">Timesheet</span></button>
+  <button class="add" id="fab" aria-label="Add a reading"><span class="circle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="badge hidden" id="fabBadge"></span><span class="gap"></span><span data-i18n="nav_add">Add</span></button>
+  <button data-view="meds"><span class="dot hidden" id="medDot"></span><svg viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M8.6 8.6l6.8 6.8"/></svg><span data-i18n="nav_meds">Meds</span></button>
+  <button data-view="stats"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span data-i18n="nav_stats">Progress</span></button>
+</nav>
+
+<dialog id="entry">
+  <form id="entryForm" method="dialog">
+    <h3 id="entryTitle">New reading</h3>
+    <label for="fVal" data-i18n="blood_sugar">Blood sugar</label>
+    <div class="valin"><input id="fVal" type="number" inputmode="decimal" step="any" min="0" required placeholder="—"><span id="fUnit">mg/dL</span></div>
+    <div id="fStatus"></div>
+    <label data-i18n="when_taken">When was it taken?</label>
+    <div class="chips" id="fSlots"></div>
+    <div class="when" id="fWhen"></div>
+    <label for="fNote" data-i18n="note_opt">Note (optional)</label>
+    <input id="fNote" type="text" data-i18n-ph="note_ph" placeholder="e.g. rice for lunch, 20 min walk">
+    <div class="row" style="margin-top:16px">
+      <button type="button" class="danger" id="fDel" data-i18n="del">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" id="fCancel" data-i18n="cancel">Cancel</button>
+      <button type="submit" class="primary" data-i18n="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="medDlg">
+  <form id="medForm" method="dialog">
+    <h3 id="medTitle">Add medicine</h3>
+    <label for="mName" data-i18n="med_name">Medicine name</label>
+    <input id="mName" type="text" required data-i18n-ph="med_name_ph" placeholder="e.g. Metformin" autocomplete="off">
+    <label for="mDose" data-i18n="med_dose">Dose (optional)</label>
+    <input id="mDose" type="text" data-i18n-ph="med_dose_ph" placeholder="e.g. 500 mg · 1 tablet" autocomplete="off">
+    <label><span data-i18n="med_when">When do you take it?</span> <span class="small">(<span data-i18n="pick_one">pick one or more</span>)</span></label>
+    <div class="chips" id="mTimes"></div>
+    <div class="row" style="margin-top:16px">
+      <button type="button" class="danger" id="mDel" data-i18n="del">Delete</button>
+      <span class="spacer"></span>
+      <button type="button" id="mCancel" data-i18n="cancel">Cancel</button>
+      <button type="submit" class="primary" data-i18n="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="importFile" accept="application/json,.json" class="hidden">
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   LANGUAGE — every piece of text in the app lives here (English + Hindi)
+   ===================================================================== */
+const I18N = {
+  en: {
+    appName: 'Sugar Log', lang_btn: 'हिंदी', lang_aria: 'Switch language to Hindi', lang_switched: 'Language: English',
+    nav_today: 'Today', nav_sheet: 'Timesheet', nav_add: 'Add', nav_meds: 'Meds', nav_stats: 'Progress', settings: 'Settings',
+    add_reading_aria: 'Add a reading', add_due_aria: 'Add a reading — 2-hr after {meal} is due', due_badge: 'Due',
+    meal_b: 'Breakfast', meal_l: 'Lunch', meal_d: 'Dinner',
+    mealo_b: 'Breakfast', mealo_l: 'Lunch', mealo_d: 'Dinner',
+    slot_b_pre: 'Before Breakfast', slot_b_post: '2h After Breakfast', slot_l_pre: 'Before Lunch', slot_l_post: '2h After Lunch',
+    slot_d_pre: 'Before Dinner', slot_d_post: '2h After Dinner', slot_random: 'Random',
+    st_ok: 'In target', st_low: 'Low', st_high: 'High', st_vhigh: 'Very high',
+    new_reading: 'New reading', edit_reading: 'Edit reading', blood_sugar: 'Blood sugar', when_taken: 'When was it taken?',
+    when_now: 'Now · {t}', when_now_sub: "Date and time are taken from your phone's clock", when_saved: 'Recorded {t}',
+    note_opt: 'Note (optional)', note_ph: 'e.g. rice for lunch, 20 min walk', del: 'Delete', cancel: 'Cancel', save: 'Save',
+    low_advice: ' — treat a low as your doctor advised', enter_reading: 'Enter a reading', value_off: 'That value looks off — check the unit ({u})',
+    saved_r: 'Saved: {v} {u} · {s}', updated_r: 'Updated: {v} {u} · {s}', reading_deleted: 'Reading deleted', confirm_del_reading: 'Delete this reading?',
+    all_readings_done: "🎉 All of today's readings are done!",
+    todays_readings: "Today's readings", complete: 'complete', streak: '🔥 {n}-day streak',
+    all_done_today: 'All scheduled readings done for today. Nice work!',
+    more_to_go: '{n} more scheduled readings to go', more_to_go_1: '1 more scheduled reading to go',
+    no_meals: 'No meals selected in Settings',
+    after_meal_due: '2-hr after {meal}', due_now: 'due now', overdue_by: 'overdue by {d}', due_at: 'due at {t} · in {d}', log: 'Log',
+    meds_title: '💊 Medicines', n_taken: '<b>{d}</b> / {t} taken', all_meds_taken: "✓ All of today's medicines are taken",
+    med_setup_title: 'Medicine reminders', med_setup_text: 'Add your morning, after-lunch and after-dinner medicines.', set_up: 'Set up',
+    meal_readings: 'Meal readings', turn_on_meal: 'Turn on at least one meal in Settings.',
+    random_title: 'Random / other readings', add_plus: '+ Add',
+    random_hint: 'Any extra check during the day — e.g. when you feel unwell, before exercise or at bedtime.',
+    avg_today: 'Average today ({u})', in_target_count: 'Readings in target',
+    before: 'Before', after2h: '2h after', plus_log: '+ Log',
+    days_n: '{n} days', all: 'All', logging_completion: 'Logging completion', n_days: '{n} days', n_days_1: '1 day',
+    no_readings_yet: 'No readings yet. Tap + to log your first one.',
+    date: 'Date', pre: 'Pre', post2h: '2h Post', random_col: 'Random', done: 'Done', avg: 'Avg', meds_col: '💊 Meds', today: 'Today',
+    legend_multi: '* more than one reading — tap to see the latest',
+    sheet_hint: "Values in {u}. Tap an empty cell in today's row to log a reading, or tap any value to edit it.",
+    logging_progress: 'Logging progress', last_7: 'Last 7 days', last_30: 'Last 30 days', full_days: '{a}/{b} full days',
+    cur_streak: '🔥 Current streak: <b>{n}</b> days with every scheduled reading logged',
+    meds_taken_title: '💊 Medicines taken', of_readings: '{d} of {t} scheduled readings', of_doses: '{d} of {t} doses',
+    tir_title: 'Time in target range', pct_in_target: '{p}% in target', no_readings: 'No readings',
+    dist: '{l} low · {o} in target · {h} high', target_line: 'Target: before meals {a}–{b}, after meals under {c} {u}',
+    avgs_title: 'Averages · last 7 days', before_meals: 'Before meals', after_meals: '2h after meals', random: 'Random', total_readings: 'Total readings',
+    last30_avgs: 'Last 30 days — before: <b>{a}</b> · after: <b>{b}</b> {u}',
+    trend_title: 'Trend · last 14 days', trend_empty: 'Log a few readings to see your trend.', trend_aria: 'Blood sugar readings over the last 14 days',
+    lg_before: '○ before meal / random', lg_after: '● 2h after meal', lg_band: 'target band',
+    dose_morning: 'Morning', dose_morning_sub: 'before breakfast', dose_lunch: 'After lunch', dose_dinner: 'After dinner',
+    tag_done: 'Done ✓', tag_due: 'Due now', tag_up: 'Upcoming', tag_missed: 'Missed',
+    taken_at: 'Taken at {t}', due_tap: 'Due now — tap ✓ when taken', not_taken: 'Not taken yet', at_time: 'At {t}',
+    mark_taken: 'Mark taken', mark_not: 'Mark not taken', alarm_msg: '💊 {slot} medicines',
+    notif_unsupported: 'Not supported', notif_blocked: 'Blocked', notif_on: 'On ✓', notif_turn_on: 'Turn on',
+    toast_notif_unsupported: 'Notifications are not supported in this browser', toast_notif_off: 'Notifications off',
+    toast_notif_blocked: 'Notifications are blocked — allow them in Chrome site settings', toast_notif_on: 'Notifications on',
+    toast_notif_denied: 'Notifications not allowed',
+    n_med_title: '💊 {slot} medicines', n_sugar_title: '🩸 Time to check your sugar', n_sugar_body: 'Your 2-hr after {meal} reading is due',
+    add_meds_title: 'Add your medicines',
+    add_meds_text: 'Choose when you take each one — morning before breakfast, after lunch or after dinner — then tick them off every day.',
+    add_med_btn: '+ Add medicine', todays_meds: "Today's medicines", todays_doses: "Today's doses", my_meds: 'My medicines',
+    reminder_times: '⏰ Reminder times', set_alarm_aria: 'Set a phone alarm for {slot}',
+    app_notifs: '🔔 App notifications', app_notifs_sub: 'Alerts for medicines and sugar checks while Sugar Log is open or recently used',
+    alarm_hint_android: 'For a reminder that always rings — even when the app is closed — tap ⏰ to create an alarm in your Clock app, then set it to repeat daily.',
+    alarm_hint_other: 'On your Android phone, a ⏰ button appears here to create a daily alarm in the Clock app.',
+    time_set: '{slot} time set to {t}', last_7_title: 'Last 7 days',
+    add_medicine: 'Add medicine', edit_medicine: 'Edit medicine', med_name: 'Medicine name', med_name_ph: 'e.g. Metformin',
+    med_dose: 'Dose (optional)', med_dose_ph: 'e.g. 500 mg · 1 tablet', med_when: 'When do you take it?', pick_one: 'pick one or more',
+    confirm_remove_med: 'Remove {name}? Its taken-dose history will be removed too.', med_removed: 'Medicine removed',
+    enter_med_name: 'Enter the medicine name', pick_time: 'Pick at least one time', med_added: 'Added {name}', med_updated: 'Updated {name}',
+    no_meds: 'No medicines added yet', all_meds_toast: "💊 All of today's medicines are taken!",
+    dose_taken_toast: '✓ {name} marked as taken', dose_untaken_toast: 'Marked as not taken',
+    language: 'Language', units: 'Units', meals_track: 'Meals to track daily', before_after: '(before + 2h after)',
+    after_meal_rem: 'After-meal reminder', after_meal_rem_sub: 'Minutes after the before-meal reading',
+    target_ranges: 'Target ranges ({u})', t_preMin: 'Before meal — from', t_preMax: 'Before meal — up to',
+    t_postMax: '2h after meal — under', t_low: 'Low (hypo) below', t_veryHigh: 'Very high at or above',
+    targets_note: 'Defaults follow common guidance (80–130 before meals, under 180 two hours after). Use the targets your doctor gave you.',
+    reset_defaults: 'Reset to defaults', your_data: 'Your data',
+    data_note: '{n} readings saved on this phone only. Back up regularly — clearing browser data deletes them.',
+    data_note_1: '1 reading saved on this phone only. Back up regularly — clearing browser data deletes it.',
+    export_csv: 'Export CSV (Excel)', meds_csv: 'Medicines CSV', backup: 'Backup file', restore: 'Restore backup', delete_all: 'Delete all',
+    footer: 'Sugar Log · for personal tracking, not medical advice.', saved: 'Saved', targets_reset: 'Targets reset',
+    confirm_clear: 'Delete all {n} readings? This cannot be undone. Export a backup first if unsure.', all_deleted: 'All readings deleted',
+    restored: 'Restored {n} readings', bad_backup: 'That file is not a Sugar Log backup', storage_fail: 'Could not save — browser storage is unavailable',
+    csv_date: 'Date', csv_time: 'Time', csv_type: 'Reading type', csv_value: 'Value ({u})', csv_mg: 'Value (mg/dL)', csv_status: 'Status',
+    csv_note: 'Note', csv_med: 'Medicine', csv_dose: 'Dose', csv_taken_at: 'Taken at', csv_taken: 'Taken', csv_due: 'Due',
+    fmt_hm: '{h}h {m}m', fmt_min: '{m} min',
+  },
+  hi: {
+    appName: 'शुगर लॉग', lang_btn: 'English', lang_aria: 'भाषा अंग्रेज़ी में बदलें', lang_switched: 'भाषा: हिंदी',
+    nav_today: 'आज', nav_sheet: 'टाइमशीट', nav_add: 'जोड़ें', nav_meds: 'दवाइयाँ', nav_stats: 'प्रगति', settings: 'सेटिंग्स',
+    add_reading_aria: 'रीडिंग जोड़ें', add_due_aria: 'रीडिंग जोड़ें — {meal} के 2 घंटे बाद वाली रीडिंग का समय हो गया है', due_badge: 'अभी',
+    meal_b: 'नाश्ता', meal_l: 'दोपहर का खाना', meal_d: 'रात का खाना',
+    mealo_b: 'नाश्ते', mealo_l: 'दोपहर के खाने', mealo_d: 'रात के खाने',
+    slot_b_pre: 'नाश्ते से पहले', slot_b_post: 'नाश्ते के 2 घंटे बाद', slot_l_pre: 'दोपहर के खाने से पहले', slot_l_post: 'दोपहर के खाने के 2 घंटे बाद',
+    slot_d_pre: 'रात के खाने से पहले', slot_d_post: 'रात के खाने के 2 घंटे बाद', slot_random: 'कभी भी (रैंडम)',
+    st_ok: 'लक्ष्य में', st_low: 'कम', st_high: 'ज़्यादा', st_vhigh: 'बहुत ज़्यादा',
+    new_reading: 'नई रीडिंग', edit_reading: 'रीडिंग बदलें', blood_sugar: 'ब्लड शुगर', when_taken: 'रीडिंग कब ली?',
+    when_now: 'अभी · {t}', when_now_sub: 'तारीख़ और समय फ़ोन की घड़ी से अपने-आप लिया जाता है', when_saved: 'दर्ज समय: {t}',
+    note_opt: 'नोट (वैकल्पिक)', note_ph: 'जैसे: दोपहर में चावल खाए, 20 मिनट टहले', del: 'हटाएँ', cancel: 'रद्द करें', save: 'सेव करें',
+    low_advice: ' — डॉक्टर की सलाह के अनुसार तुरंत उपाय करें', enter_reading: 'रीडिंग डालें', value_off: 'यह मान सही नहीं लगता — यूनिट जाँचें ({u})',
+    saved_r: 'सेव हुआ: {v} {u} · {s}', updated_r: 'अपडेट हुआ: {v} {u} · {s}', reading_deleted: 'रीडिंग हटा दी गई', confirm_del_reading: 'यह रीडिंग हटाएँ?',
+    all_readings_done: '🎉 आज की सभी रीडिंग पूरी हो गईं!',
+    todays_readings: 'आज की रीडिंग', complete: 'पूरा', streak: '🔥 लगातार {n} दिन',
+    all_done_today: 'आज की सभी तय रीडिंग पूरी हो गईं। बहुत बढ़िया!',
+    more_to_go: 'अभी {n} रीडिंग बाकी हैं', more_to_go_1: 'अभी 1 रीडिंग बाकी है',
+    no_meals: 'सेटिंग्स में कोई भोजन नहीं चुना गया',
+    after_meal_due: '{meal} के 2 घंटे बाद', due_now: 'अभी लेनी है', overdue_by: '{d} की देरी', due_at: '{t} पर · {d} में', log: 'दर्ज करें',
+    meds_title: '💊 दवाइयाँ', n_taken: '<b>{d}</b> / {t} ली गईं', all_meds_taken: '✓ आज की सभी दवाइयाँ ले ली गईं',
+    med_setup_title: 'दवाई रिमाइंडर', med_setup_text: 'सुबह, दोपहर के खाने के बाद और रात के खाने के बाद की दवाइयाँ जोड़ें।', set_up: 'शुरू करें',
+    meal_readings: 'खाने से जुड़ी रीडिंग', turn_on_meal: 'सेटिंग्स में कम से कम एक भोजन चालू करें।',
+    random_title: 'कभी भी / अन्य रीडिंग', add_plus: '+ जोड़ें',
+    random_hint: 'दिन में कोई भी अतिरिक्त जाँच — जैसे तबीयत ठीक न लगे, व्यायाम से पहले या सोने से पहले।',
+    avg_today: 'आज का औसत ({u})', in_target_count: 'लक्ष्य में रीडिंग',
+    before: 'पहले', after2h: '2 घंटे बाद', plus_log: '+ दर्ज करें',
+    days_n: '{n} दिन', all: 'सभी', logging_completion: 'रीडिंग पूरी हुईं', n_days: '{n} दिन', n_days_1: '1 दिन',
+    no_readings_yet: 'अभी कोई रीडिंग नहीं है। पहली रीडिंग के लिए + दबाएँ।',
+    date: 'तारीख़', pre: 'पहले', post2h: '2 घं बाद', random_col: 'रैंडम', done: 'पूरा', avg: 'औसत', meds_col: '💊 दवाई', today: 'आज',
+    legend_multi: '* एक से ज़्यादा रीडिंग — ताज़ा रीडिंग देखने के लिए दबाएँ',
+    sheet_hint: 'मान {u} में। आज की पंक्ति के खाली खाने को दबाकर रीडिंग दर्ज करें, या किसी मान को बदलने के लिए उसे दबाएँ।',
+    logging_progress: 'रीडिंग की प्रगति', last_7: 'पिछले 7 दिन', last_30: 'पिछले 30 दिन', full_days: '{a}/{b} पूरे दिन',
+    cur_streak: '🔥 लगातार <b>{n}</b> दिन सभी तय रीडिंग दर्ज हुईं',
+    meds_taken_title: '💊 ली गई दवाइयाँ', of_readings: '{t} में से {d} तय रीडिंग', of_doses: '{t} में से {d} खुराक',
+    tir_title: 'लक्ष्य सीमा में रीडिंग', pct_in_target: '{p}% लक्ष्य में', no_readings: 'कोई रीडिंग नहीं',
+    dist: '{l} कम · {o} लक्ष्य में · {h} ज़्यादा', target_line: 'लक्ष्य: खाने से पहले {a}–{b}, खाने के बाद {c} {u} से कम',
+    avgs_title: 'औसत · पिछले 7 दिन', before_meals: 'खाने से पहले', after_meals: 'खाने के 2 घंटे बाद', random: 'रैंडम', total_readings: 'कुल रीडिंग',
+    last30_avgs: 'पिछले 30 दिन — पहले: <b>{a}</b> · बाद: <b>{b}</b> {u}',
+    trend_title: 'रुझान · पिछले 14 दिन', trend_empty: 'रुझान देखने के लिए कुछ रीडिंग दर्ज करें।', trend_aria: 'पिछले 14 दिनों की ब्लड शुगर रीडिंग',
+    lg_before: '○ खाने से पहले / रैंडम', lg_after: '● खाने के 2 घंटे बाद', lg_band: 'लक्ष्य सीमा',
+    dose_morning: 'सुबह', dose_morning_sub: 'नाश्ते से पहले', dose_lunch: 'दोपहर खाने के बाद', dose_dinner: 'रात खाने के बाद',
+    tag_done: 'ली गई ✓', tag_due: 'अभी लें', tag_up: 'आने वाली', tag_missed: 'छूट गई',
+    taken_at: '{t} पर ली', due_tap: 'अभी लें — लेने के बाद ✓ दबाएँ', not_taken: 'अभी तक नहीं ली', at_time: '{t} पर',
+    mark_taken: 'ली गई मार्क करें', mark_not: 'नहीं ली मार्क करें', alarm_msg: '💊 {slot} की दवाई',
+    notif_unsupported: 'उपलब्ध नहीं', notif_blocked: 'ब्लॉक है', notif_on: 'चालू ✓', notif_turn_on: 'चालू करें',
+    toast_notif_unsupported: 'इस ब्राउज़र में सूचनाएँ उपलब्ध नहीं हैं', toast_notif_off: 'सूचनाएँ बंद',
+    toast_notif_blocked: 'सूचनाएँ ब्लॉक हैं — Chrome की साइट सेटिंग्स में अनुमति दें', toast_notif_on: 'सूचनाएँ चालू',
+    toast_notif_denied: 'सूचनाओं की अनुमति नहीं मिली',
+    n_med_title: '💊 {slot} की दवाई', n_sugar_title: '🩸 शुगर जाँचने का समय', n_sugar_body: '{meal} के 2 घंटे बाद वाली रीडिंग का समय हो गया है',
+    add_meds_title: 'अपनी दवाइयाँ जोड़ें',
+    add_meds_text: 'हर दवाई का समय चुनें — सुबह नाश्ते से पहले, दोपहर के खाने के बाद या रात के खाने के बाद — फिर रोज़ लेने पर ✓ लगाएँ।',
+    add_med_btn: '+ दवाई जोड़ें', todays_meds: 'आज की दवाइयाँ', todays_doses: 'आज की खुराक', my_meds: 'मेरी दवाइयाँ',
+    reminder_times: '⏰ रिमाइंडर का समय', set_alarm_aria: '{slot} के लिए फ़ोन अलार्म लगाएँ',
+    app_notifs: '🔔 ऐप सूचनाएँ', app_notifs_sub: 'दवाई और शुगर जाँच की सूचना, जब ऐप खुला हो या हाल ही में इस्तेमाल हुआ हो',
+    alarm_hint_android: 'ऐसा रिमाइंडर जो ऐप बंद होने पर भी बजे — ⏰ दबाकर घड़ी (Clock) ऐप में अलार्म बनाएँ, फिर उसे रोज़ दोहराने के लिए सेट करें।',
+    alarm_hint_other: 'Android फ़ोन पर यहाँ ⏰ बटन दिखेगा, जिससे घड़ी (Clock) ऐप में रोज़ का अलार्म बना सकते हैं।',
+    time_set: '{slot} का समय {t} कर दिया गया', last_7_title: 'पिछले 7 दिन',
+    add_medicine: 'दवाई जोड़ें', edit_medicine: 'दवाई बदलें', med_name: 'दवाई का नाम', med_name_ph: 'जैसे: मेटफ़ॉर्मिन',
+    med_dose: 'खुराक (वैकल्पिक)', med_dose_ph: 'जैसे: 500 mg · 1 गोली', med_when: 'कब लेते हैं?', pick_one: 'एक या ज़्यादा चुनें',
+    confirm_remove_med: '{name} हटाएँ? इसकी ली गई खुराक का रिकॉर्ड भी हट जाएगा।', med_removed: 'दवाई हटा दी गई',
+    enter_med_name: 'दवाई का नाम डालें', pick_time: 'कम से कम एक समय चुनें', med_added: '{name} जोड़ी गई', med_updated: '{name} अपडेट हुई',
+    no_meds: 'अभी कोई दवाई नहीं जोड़ी गई', all_meds_toast: '💊 आज की सभी दवाइयाँ ले ली गईं!',
+    dose_taken_toast: '✓ {name} ली गई', dose_untaken_toast: '"नहीं ली" मार्क किया गया',
+    language: 'भाषा', units: 'यूनिट', meals_track: 'रोज़ कौन-से भोजन ट्रैक करें', before_after: '(पहले + 2 घंटे बाद)',
+    after_meal_rem: 'खाने के बाद का रिमाइंडर', after_meal_rem_sub: 'खाने से पहले वाली रीडिंग के कितने मिनट बाद',
+    target_ranges: 'लक्ष्य सीमा ({u})', t_preMin: 'खाने से पहले — कम से कम', t_preMax: 'खाने से पहले — ज़्यादा से ज़्यादा',
+    t_postMax: 'खाने के 2 घंटे बाद — इससे कम', t_low: 'कम (हाइपो) — इससे नीचे', t_veryHigh: 'बहुत ज़्यादा — इतना या ऊपर',
+    targets_note: 'डिफ़ॉल्ट मान सामान्य दिशानिर्देशों पर आधारित हैं (खाने से पहले 80–130, 2 घंटे बाद 180 से कम)। अपने डॉक्टर के बताए लक्ष्य रखें।',
+    reset_defaults: 'डिफ़ॉल्ट पर लौटें', your_data: 'आपका डेटा',
+    data_note: '{n} रीडिंग सिर्फ़ इसी फ़ोन में सेव हैं। नियमित बैकअप लें — ब्राउज़र डेटा मिटाने पर ये हट जाएँगी।',
+    data_note_1: '1 रीडिंग सिर्फ़ इसी फ़ोन में सेव है। नियमित बैकअप लें — ब्राउज़र डेटा मिटाने पर यह हट जाएगी।',
+    export_csv: 'CSV निर्यात (Excel)', meds_csv: 'दवाइयों की CSV', backup: 'बैकअप फ़ाइल', restore: 'बैकअप वापस लाएँ', delete_all: 'सब हटाएँ',
+    footer: 'शुगर लॉग · निजी रिकॉर्ड के लिए, यह चिकित्सा सलाह नहीं है।', saved: 'सेव हुआ', targets_reset: 'लक्ष्य डिफ़ॉल्ट पर लौटे',
+    confirm_clear: 'सभी {n} रीडिंग हटाएँ? यह वापस नहीं होगा। पक्का न हों तो पहले बैकअप लें।', all_deleted: 'सभी रीडिंग हटा दी गईं',
+    restored: '{n} रीडिंग वापस लाई गईं', bad_backup: 'यह शुगर लॉग की बैकअप फ़ाइल नहीं है', storage_fail: 'सेव नहीं हो सका — ब्राउज़र स्टोरेज उपलब्ध नहीं है',
+    csv_date: 'तारीख़', csv_time: 'समय', csv_type: 'रीडिंग का प्रकार', csv_value: 'मान ({u})', csv_mg: 'मान (mg/dL)', csv_status: 'स्थिति',
+    csv_note: 'नोट', csv_med: 'दवाई', csv_dose: 'खुराक', csv_taken_at: 'कब ली', csv_taken: 'ली', csv_due: 'बाकी',
+    fmt_hm: '{h} घं {m} मि', fmt_min: '{m} मिनट',
+  },
+};
+const lang = () => (db && db.settings && I18N[db.settings.lang]) ? db.settings.lang : 'en';
+/* t('key', {n: 1}) — fills {placeholders}; uses key_1 when n is 1 and such a key exists */
+function t(key, p = {}) {
+  const dict = I18N[lang()];
+  let s = (p.n === 1 && dict[key + '_1']) || dict[key] || I18N.en[key] || key;
+  return s.replace(/\{(\w+)\}/g, (m, k) => (k in p ? p[k] : m));
+}
+const LOC = () => lang() === 'hi' ? 'hi-IN' : undefined;
+function applyStatic() {
+  document.documentElement.lang = lang();
+  document.title = t('appName');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+}
+function setLang(l) {
+  if (!I18N[l] || l === lang()) return;
+  S().lang = l; save(); applyStatic(); render(true); toast(t('lang_switched'));
+}
+
+/* ---------- constants ---------- */
+const KEY = 'sugarlog.v1';
+const MEAL_IDS = ['b', 'l', 'd'];
+const mealName = m => t('meal_' + m);
+const mealObl = m => t('mealo_' + m);           // "of the meal" form, needed for Hindi grammar
+const SLOTS = [
+  { id: 'b_pre', meal: 'b', kind: 'pre' }, { id: 'b_post', meal: 'b', kind: 'post' },
+  { id: 'l_pre', meal: 'l', kind: 'pre' }, { id: 'l_post', meal: 'l', kind: 'post' },
+  { id: 'd_pre', meal: 'd', kind: 'pre' }, { id: 'd_post', meal: 'd', kind: 'post' },
+  { id: 'random', meal: null, kind: 'random' },
+];
+const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
+const slotLabel = id => t('slot_' + id);
+const DEFAULTS = {
+  lang: (navigator.language || '').toLowerCase().startsWith('hi') ? 'hi' : 'en',
+  unit: 'mgdl',          // 'mgdl' | 'mmol'
+  low: 70,               // hypo threshold (mg/dL)
+  preMin: 80, preMax: 130,
+  postMax: 180,
+  veryHigh: 250,
+  gapMin: 120,           // minutes after a before-meal reading that the after-meal reading is due
+  meals: { b: true, l: true, d: true },
+  medTimes: { morning: '07:30', lunch: '14:00', dinner: '21:00' },
+  notify: false,
+};
+
+/* ---------- storage ---------- */
+let db = null;
+db = load();
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.readings)) {
+      const s = d.settings || {};
+      return { settings: { ...DEFAULTS, ...s, meals: { ...DEFAULTS.meals, ...(s.meals || {}) }, medTimes: { ...DEFAULTS.medTimes, ...(s.medTimes || {}) } },
+        readings: d.readings, meds: Array.isArray(d.meds) ? d.meds : [], doses: Array.isArray(d.doses) ? d.doses : [] };
+    }
+  } catch (e) {}
+  return { settings: JSON.parse(JSON.stringify(DEFAULTS)), readings: [], meds: [], doses: [] };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { toast(t('storage_fail')); }
+}
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const S = () => db.settings;
+const dayKey = ts => { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const keyToDate = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const todayKey = () => dayKey(Date.now());
+const addDays = (k, n) => { const d = keyToDate(k); d.setDate(d.getDate() + n); return dayKey(d); };
+const timeStr = ts => new Date(ts).toLocaleTimeString(LOC(), { hour: 'numeric', minute: '2-digit' });
+const dateTimeStr = ts => new Date(ts).toLocaleString(LOC(), { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const shortDate = d => d.toLocaleDateString(LOC(), { day: 'numeric', month: 'short' });
+const weekday = d => d.toLocaleDateString(LOC(), { weekday: 'short' });
+const unitLabel = () => S().unit === 'mmol' ? 'mmol/L' : 'mg/dL';
+const fmt = mg => S().unit === 'mmol' ? (mg / 18).toFixed(1) : String(Math.round(mg));
+const toMg = v => S().unit === 'mmol' ? v * 18 : v;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const scheduled = () => SLOTS.filter(s => s.kind !== 'random' && S().meals[s.meal]);
+
+function classify(mg, slotId) {
+  const s = S(), kind = (SLOT[slotId] || {}).kind;
+  if (mg < s.low) return 'low';
+  if (mg >= s.veryHigh) return 'vhigh';
+  if (kind === 'pre') return mg < s.preMin ? 'low' : mg > s.preMax ? 'high' : 'ok';
+  return mg > s.postMax ? 'high' : 'ok';
+}
+const stText = c => t('st_' + c);
+
+function byDay() {
+  const m = new Map();
+  for (const r of db.readings) {
+    const k = dayKey(r.ts);
+    if (!m.has(k)) m.set(k, []);
+    m.get(k).push(r);
+  }
+  for (const a of m.values()) a.sort((x, y) => x.ts - y.ts);
+  return m;
+}
+function dayStats(list) {
+  const sched = scheduled();
+  const done = sched.filter(s => list.some(r => r.slot === s.id)).length;
+  return { done, total: sched.length, pct: sched.length ? done / sched.length : 0 };
+}
+function streak(days) {
+  let k = todayKey(), n = 0;
+  if (dayStats(days.get(k) || []).pct < 1) k = addDays(k, -1);
+  while (scheduled().length && dayStats(days.get(k) || []).pct >= 1) { n++; k = addDays(k, -1); }
+  return n;
+}
+function toast(msg) {
+  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+function fmtMins(m) { return m >= 60 ? t('fmt_hm', { h: Math.floor(m / 60), m: m % 60 }) : t('fmt_min', { m }); }
+
+/* ---------- navigation ---------- */
+let view = 'today';
+try { view = localStorage.getItem(KEY + '.view') || 'today'; } catch (e) {}
+function show(v) {
+  view = v;
+  try { localStorage.setItem(KEY + '.view', v); } catch (e) {}
+  document.querySelectorAll('nav button, .hdr-btn').forEach(b => b.classList.toggle('on', !!b.dataset.view && b.dataset.view === v));
+  document.querySelectorAll('main > section').forEach(s => s.classList.toggle('hidden', s.id !== 'v-' + v));
+  render(true);
+  window.scrollTo(0, 0);
+}
+document.querySelector('header').addEventListener('click', e => {
+  if (e.target.closest('#langBtn')) { setLang(lang() === 'hi' ? 'en' : 'hi'); return; }
+  const b = e.target.closest('button[data-view]'); if (b) show(b.dataset.view);
+});
+document.querySelector('nav').addEventListener('click', e => { const b = e.target.closest('button[data-view]'); if (b) show(b.dataset.view); });
+
+function render(animate) {
+  updateFab();
+  $('#hdrSub').textContent = new Date().toLocaleDateString(LOC(), { weekday: 'long', day: 'numeric', month: 'long' });
+  ({ today: renderToday, sheet: renderSheet, stats: renderStats, meds: renderMeds, settings: renderSettings })[view]();
+  if (animate) animateIn($('#v-' + view));
+}
+
+/* ---------- animation helpers ---------- */
+const REDUCED = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+function animateIn(sec) {
+  if (REDUCED || !sec) return;
+  sec.classList.remove('enter'); void sec.offsetWidth;
+  [...sec.children].forEach((c, i) => c.style.setProperty('--d', Math.min(i, 8) * 70 + 'ms'));
+  sec.querySelectorAll('.slot, .pill').forEach((el, i) => el.style.setProperty('--s', Math.min(i, 10) * 45 + 'ms'));
+  sec.classList.add('enter');
+  clearTimeout(sec._t); sec._t = setTimeout(() => sec.classList.remove('enter'), 2000);
+  sec.querySelectorAll('.cu, .kpi .n').forEach(countUp);
+}
+function countUp(el) {
+  const text = el.textContent.trim();
+  if (!/^\d+(\.\d+)?$/.test(text)) return;
+  const target = parseFloat(text), dec = (text.split('.')[1] || '').length, t0 = performance.now(), dur = 900;
+  const step = now => {
+    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = (target * e).toFixed(dec);
+    if (p < 1) requestAnimationFrame(step); else el.textContent = text;
+  };
+  el.textContent = (0).toFixed(dec); requestAnimationFrame(step);
+}
+function confetti() {
+  if (REDUCED) return;
+  const colors = ['#f97316', '#facc15', '#fb923c', '#16a34a', '#ef4444', '#fde047'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('span');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[i % colors.length];
+    c.style.setProperty('--x', (Math.random() * 160 - 80) + 'px');
+    c.style.setProperty('--r', (Math.random() * 900 - 450) + 'deg');
+    c.style.setProperty('--t', (1.4 + Math.random() * 1.2) + 's');
+    c.style.animationDelay = Math.random() * .35 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3200);
+  }
+}
+let lastTodayPct = 0;
+
+/* centre Add button: pulse + badge when an after-meal reading is due */
+function updateFab() {
+  const due = dueInfo(byDay().get(todayKey()) || []);
+  const isDue = !!due && due.mins <= 0;
+  $('#fab').classList.toggle('attention', isDue);
+  const b = $('#fabBadge');
+  b.classList.toggle('hidden', !isDue);
+  b.textContent = isDue ? t('due_badge') : '';
+  $('#fab').setAttribute('aria-label', isDue ? t('add_due_aria', { meal: mealObl(due.meal) }) : t('add_reading_aria'));
+  $('#medDot').classList.toggle('hidden', !dueDoses().length);
+}
+
+/* ---------- MEDICINES ---------- */
+const DOSE_SLOTS = [
+  { id: 'morning', icon: '🌅' },
+  { id: 'lunch', icon: '☀️' },
+  { id: 'dinner', icon: '🌙' },
+];
+const DS = Object.fromEntries(DOSE_SLOTS.map(d => [d.id, d]));
+const doseLabel = id => t('dose_' + id);
+const doseSub = id => id === 'morning' ? t('dose_morning_sub') : '';
+const DUE_WINDOW = 3 * 3600e3; // a dose counts as "due" for 3 hours after its time, then "missed"
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+
+function slotTime(dayK, slot) { const d = keyToDate(dayK); const [h, m] = S().medTimes[slot].split(':').map(Number); d.setHours(h, m, 0, 0); return d.getTime(); }
+function fmtClock(hhmm) { const [h, m] = hhmm.split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return timeStr(d); }
+function medsFor(dayK, slot) { const end = keyToDate(addDays(dayK, 1)).getTime(); return db.meds.filter(m => m.times.includes(slot) && (m.created || 0) < end); }
+function taken(dayK, medId, slot) { return db.doses.find(d => d.day === dayK && d.medId === medId && d.slot === slot); }
+function medDayStats(dayK) {
+  let total = 0, done = 0;
+  for (const s of DOSE_SLOTS) for (const m of medsFor(dayK, s.id)) { total++; if (taken(dayK, m.id, s.id)) done++; }
+  return { total, done, pct: total ? done / total : 0 };
+}
+function doseStatus(dayK, slot, isTaken) {
+  if (isTaken) return 'done';
+  const ts = slotTime(dayK, slot), now = Date.now();
+  if (now < ts) return 'up';
+  return now < ts + DUE_WINDOW ? 'due' : 'missed';
+}
+function dueDoses() {
+  const k = todayKey(), out = [];
+  for (const s of DOSE_SLOTS) for (const m of medsFor(k, s.id)) if (!taken(k, m.id, s.id) && doseStatus(k, s.id, false) === 'due') out.push({ m, s });
+  return out;
+}
+function toggleDose(medId, slot, dayK) {
+  const ex = taken(dayK, medId, slot);
+  if (ex) db.doses = db.doses.filter(d => d !== ex);
+  else db.doses.push({ id: uid(), medId, slot, day: dayK, ts: Date.now() });
+  save();
+}
+function doseList(k, pendingOnly) {
+  let h = '', first = true;
+  for (const s of DOSE_SLOTS) {
+    const ms = medsFor(k, s.id); if (!ms.length) continue;
+    const allDone = ms.every(m => taken(k, m.id, s.id));
+    if (pendingOnly && allDone) continue;
+    const stt = doseStatus(k, s.id, allDone);
+    h += `<div class="slot-h ${first ? 'first' : ''}">${s.icon} ${doseLabel(s.id)} · ${fmtClock(S().medTimes[s.id])}<span class="spacer"></span><span class="tag ${stt}">${t('tag_' + stt)}</span></div>`;
+    first = false;
+    for (const m of ms) {
+      const tk = taken(k, m.id, s.id), ds = doseStatus(k, s.id, !!tk);
+      const meta = tk ? t('taken_at', { t: timeStr(tk.ts) }) : ds === 'due' ? t('due_tap') : ds === 'missed' ? t('not_taken') : t('at_time', { t: fmtClock(S().medTimes[s.id]) });
+      h += `<div class="dose"><div class="info"><div class="nm">${esc(m.name)}</div><div class="meta">${m.dose ? esc(m.dose) + ' · ' : ''}${meta}</div></div>
+        <button class="tick ${tk ? 'done' : ds === 'due' ? 'due' : ''}" data-dose="${m.id}|${s.id}|${k}" aria-label="${tk ? t('mark_not') : t('mark_taken')}: ${esc(m.name)}"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>`;
+    }
+  }
+  return h;
+}
+function medCell(k) {
+  const st = medDayStats(k);
+  if (!st.total) return '<td><span class="mark p">–</span></td>';
+  const cls = st.pct >= 1 ? 'y' : (k === todayKey() ? 'p' : 'n');
+  return `<td><span class="mark ${cls}">${st.pct >= 1 ? '✓' : st.done + '/' + st.total}</span></td>`;
+}
+function alarmUrl(s) {
+  const [h, m] = S().medTimes[s.id].split(':').map(Number);
+  const names = medsFor(todayKey(), s.id).map(x => x.name).join(', ');
+  const msg = t('alarm_msg', { slot: doseLabel(s.id) }) + (names ? ': ' + names : '');
+  return `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${h};i.android.intent.extra.alarm.MINUTES=${m};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(msg)};end`;
+}
+function notifLabel() {
+  if (!('Notification' in window)) return t('notif_unsupported');
+  if (Notification.permission === 'denied') return t('notif_blocked');
+  return Notification.permission === 'granted' && S().notify ? t('notif_on') : t('notif_turn_on');
+}
+async function toggleNotify() {
+  if (!('Notification' in window)) { toast(t('toast_notif_unsupported')); return; }
+  if (S().notify && Notification.permission === 'granted') { S().notify = false; save(); render(); toast(t('toast_notif_off')); return; }
+  if (Notification.permission === 'denied') { toast(t('toast_notif_blocked')); return; }
+  const p = await Notification.requestPermission();
+  S().notify = p === 'granted'; save(); render();
+  toast(p === 'granted' ? t('toast_notif_on') : t('toast_notif_denied'));
+  if (p === 'granted') checkReminders();
+}
+async function notify(title, body, tag) {
+  if (!S().notify || !('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if (reg) await reg.showNotification(title, { body, tag, icon: 'icon-192.png', badge: 'icon-192.png', vibrate: [200, 100, 200] });
+    else new Notification(title, { body, tag, icon: 'icon-192.png' });
+  } catch (e) {}
+}
+function checkReminders() {
+  const k = todayKey(); let sent;
+  try { sent = JSON.parse(localStorage.getItem(KEY + '.notified')) || {}; } catch (e) { sent = {}; }
+  if (sent.day !== k) sent = { day: k };
+  for (const s of DOSE_SLOTS) {
+    const ms = medsFor(k, s.id).filter(m => !taken(k, m.id, s.id));
+    if (ms.length && doseStatus(k, s.id, false) === 'due' && !sent['med_' + s.id]) {
+      notify(t('n_med_title', { slot: doseLabel(s.id) }), ms.map(m => m.name + (m.dose ? ` (${m.dose})` : '')).join(', '), 'med_' + s.id);
+      sent['med_' + s.id] = 1;
+    }
+  }
+  const due = dueInfo(byDay().get(k) || []);
+  if (due && due.mins <= 0 && !sent['sugar_' + due.meal]) {
+    notify(t('n_sugar_title'), t('n_sugar_body', { meal: mealObl(due.meal) }), 'sugar_' + due.meal);
+    sent['sugar_' + due.meal] = 1;
+  }
+  try { localStorage.setItem(KEY + '.notified', JSON.stringify(sent)); } catch (e) {}
+}
+
+function renderMeds() {
+  const k = todayKey(), st = medDayStats(k);
+  let h = '';
+  if (!db.meds.length) {
+    h += `<div class="card" style="text-align:center;padding:26px 18px"><div style="font-size:44px">💊</div>
+      <h2 style="margin:8px 0 6px;font-size:17px">${t('add_meds_title')}</h2>
+      <p class="muted small" style="margin:0 0 16px">${t('add_meds_text')}</p>
+      <button class="primary" data-addmed>${t('add_med_btn')}</button></div>`;
+  } else {
+    h += `<div class="card"><div class="row" style="align-items:flex-end;margin-bottom:10px">
+        <div><div class="muted small">${t('todays_meds')}</div><div class="big-pct"><span class="cu">${st.done}</span><span class="muted" style="font-size:18px;font-weight:600"> / ${st.total}</span></div></div>
+        <span class="spacer"></span><div class="big-pct" style="font-size:22px"><span class="cu">${Math.round(st.pct * 100)}</span>%</div></div>
+      <div class="bar ${st.pct >= 1 ? 'ok' : ''}"><i style="width:${st.pct * 100}%"></i></div></div>`;
+    h += `<div class="card"><h2>${t('todays_doses')}</h2>${doseList(k, false)}</div>`;
+    h += `<div class="card"><div class="row" style="margin-bottom:4px"><h2 style="margin:0">${t('my_meds')}</h2><span class="spacer"></span><button data-addmed style="padding:6px 12px">${t('add_plus')}</button></div>
+      ${db.meds.map(m => `<div class="medrow" data-editmed="${m.id}"><div class="pillicon">💊</div><div style="flex:1;min-width:0"><div style="font-weight:650">${esc(m.name)}</div>
+        <div class="muted small">${m.dose ? esc(m.dose) + ' · ' : ''}${DOSE_SLOTS.filter(s => m.times.includes(s.id)).map(s => doseLabel(s.id)).join(', ')}</div></div><span class="muted" style="font-size:20px">›</span></div>`).join('')}</div>`;
+  }
+  h += `<div class="card"><h2>${t('reminder_times')}</h2>
+    ${DOSE_SLOTS.map(s => `<div class="field"><div><div>${s.icon} ${doseLabel(s.id)}</div>${doseSub(s.id) ? `<div class="muted small">${doseSub(s.id)}</div>` : ''}</div>
+      <div class="row"><input type="time" data-medtime="${s.id}" value="${S().medTimes[s.id]}">${IS_ANDROID ? `<a class="alarm" href="${alarmUrl(s)}" aria-label="${esc(t('set_alarm_aria', { slot: doseLabel(s.id) }))}">⏰</a>` : ''}</div></div>`).join('')}
+    <div class="field"><div><div>${t('app_notifs')}</div><div class="muted small">${t('app_notifs_sub')}</div></div><button id="notifBtn">${notifLabel()}</button></div>
+    <p class="muted small" style="margin:8px 0 0">${IS_ANDROID ? t('alarm_hint_android') : t('alarm_hint_other')}</p></div>`;
+  if (db.meds.length) {
+    h += `<div class="card"><h2>${t('last_7_title')}</h2><div class="tablewrap"><table><thead><tr><th class="date">${t('date')}</th>${DOSE_SLOTS.map(s => `<th>${s.icon}<br>${doseLabel(s.id)}</th>`).join('')}<th>${t('done')}</th></tr></thead><tbody>`;
+    for (let i = 0; i < 7; i++) {
+      const dk = addDays(k, -i), d = keyToDate(dk), ds = medDayStats(dk);
+      h += `<tr class="${i === 0 ? 'today' : ''}" style="--r:${i * 40}ms"><td class="date"><b>${shortDate(d)}</b><span>${i === 0 ? t('today') : weekday(d)}</span></td>`;
+      for (const s of DOSE_SLOTS) {
+        const ms = medsFor(dk, s.id);
+        if (!ms.length) { h += '<td><span class="mark p">–</span></td>'; continue; }
+        const n = ms.filter(m => taken(dk, m.id, s.id)).length, stt = doseStatus(dk, s.id, n === ms.length);
+        h += `<td><span class="mark ${n === ms.length ? 'y' : stt === 'up' ? 'p' : 'n'}">${n === ms.length ? '✓' : stt === 'up' ? '·' : n ? n + '/' + ms.length : '✗'}</span></td>`;
+      }
+      h += `<td class="done"><span class="small"><b>${ds.done}</b>/${ds.total}</span><div class="bar thin ${ds.pct >= 1 ? 'ok' : ''}"><i style="width:${ds.pct * 100}%"></i></div></td></tr>`;
+    }
+    h += `</tbody></table></div></div>`;
+  }
+  $('#v-meds').innerHTML = h;
+}
+document.getElementById('v-meds').addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.medtime && /^\d{2}:\d{2}$/.test(el.value)) { S().medTimes[el.dataset.medtime] = el.value; save(); el.blur(); renderMeds(); toast(t('time_set', { slot: doseLabel(el.dataset.medtime), t: fmtClock(el.value) })); }
+});
+
+/* medicine add / edit dialog */
+const medDlg = $('#medDlg');
+let editingMed = null, medTimesSel = [];
+function openMed(id) {
+  editingMed = id ? db.meds.find(m => m.id === id) : null;
+  $('#medTitle').textContent = editingMed ? t('edit_medicine') : t('add_medicine');
+  $('#mDel').classList.toggle('hidden', !editingMed);
+  $('#mName').value = editingMed ? editingMed.name : '';
+  $('#mDose').value = editingMed ? editingMed.dose || '' : '';
+  medTimesSel = editingMed ? [...editingMed.times] : ['morning'];
+  renderMedChips();
+  medDlg.showModal();
+  if (!editingMed) setTimeout(() => $('#mName').focus(), 60);
+}
+function renderMedChips() {
+  $('#mTimes').innerHTML = DOSE_SLOTS.map(s => `<button type="button" data-mt="${s.id}" class="${medTimesSel.includes(s.id) ? 'on' : ''}">${s.icon} ${doseLabel(s.id)} · ${fmtClock(S().medTimes[s.id])}</button>`).join('');
+}
+$('#mTimes').addEventListener('click', e => {
+  const b = e.target.closest('[data-mt]'); if (!b) return;
+  const id = b.dataset.mt;
+  medTimesSel = medTimesSel.includes(id) ? medTimesSel.filter(x => x !== id) : [...medTimesSel, id];
+  renderMedChips();
+});
+$('#mCancel').addEventListener('click', () => medDlg.close());
+medDlg.addEventListener('click', e => { if (e.target === medDlg) medDlg.close(); });
+$('#mDel').addEventListener('click', () => {
+  if (!editingMed || !confirm(t('confirm_remove_med', { name: editingMed.name }))) return;
+  const id = editingMed.id;
+  db.meds = db.meds.filter(m => m.id !== id); db.doses = db.doses.filter(d => d.medId !== id);
+  save(); medDlg.close(); render(true); toast(t('med_removed'));
+});
+$('#medForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#mName').value.trim(), dose = $('#mDose').value.trim();
+  if (!name) { toast(t('enter_med_name')); return; }
+  if (!medTimesSel.length) { toast(t('pick_time')); return; }
+  const times = DOSE_SLOTS.map(s => s.id).filter(id => medTimesSel.includes(id));
+  if (editingMed) Object.assign(editingMed, { name, dose, times });
+  else db.meds.push({ id: uid(), name, dose, times, created: keyToDate(todayKey()).getTime() });
+  save(); medDlg.close(); render(true);
+  toast(t(editingMed ? 'med_updated' : 'med_added', { name }));
+});
+function exportMedsCsv() {
+  if (!db.meds.length) { toast(t('no_meds')); return; }
+  const rows = [[t('csv_date'), t('csv_time'), t('csv_med'), t('csv_dose'), t('csv_status'), t('csv_taken_at')]];
+  const first = dayKey(Math.min(...db.meds.map(m => m.created || Date.now())));
+  for (let k = first; k <= todayKey(); k = addDays(k, 1)) {
+    for (const s of DOSE_SLOTS) for (const m of medsFor(k, s.id)) {
+      const tk = taken(k, m.id, s.id), st = doseStatus(k, s.id, !!tk);
+      rows.push([k, `${doseLabel(s.id)} (${S().medTimes[s.id]})`, m.name, m.dose || '', tk ? t('csv_taken') : st === 'up' ? t('tag_up') : st === 'due' ? t('csv_due') : t('tag_missed'), tk ? timeStr(tk.ts) : '']);
+    }
+  }
+  download(`sugar-log-medicines-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n'), 'text/csv');
+}
+
+/* ---------- TODAY ---------- */
+function dueInfo(list) {
+  // latest before-meal reading today whose after-meal reading isn't logged yet
+  const pending = list.filter(r => SLOT[r.slot]?.kind === 'pre' && S().meals[SLOT[r.slot].meal] &&
+    !list.some(x => x.slot === SLOT[r.slot].meal + '_post'));
+  if (!pending.length) return null;
+  const r = pending[pending.length - 1];
+  const due = r.ts + S().gapMin * 60000;
+  return { meal: SLOT[r.slot].meal, due, mins: Math.round((due - Date.now()) / 60000) };
+}
+
+function renderToday() {
+  const days = byDay(), k = todayKey(), list = days.get(k) || [];
+  const st = dayStats(list), str = streak(days);
+  const due = dueInfo(list);
+  let h = '';
+
+  const left = st.total - st.done;
+  h += `<div class="card">
+    <div class="row" style="align-items:flex-end;margin-bottom:10px">
+      <div><div class="muted small">${t('todays_readings')}</div>
+        <div class="big-pct"><span class="cu">${st.done}</span><span class="muted" style="font-size:18px;font-weight:600"> / ${st.total}</span></div></div>
+      <span class="spacer"></span>
+      <div style="text-align:right"><div class="big-pct" style="font-size:22px"><span class="cu">${Math.round(st.pct * 100)}</span>%</div>
+        <div class="muted small">${str ? t('streak', { n: str }) : t('complete')}</div></div>
+    </div>
+    <div class="bar ${st.pct >= 1 ? 'ok' : ''}"><i class="live" id="todayBar" style="width:${lastTodayPct * 100}%"></i></div>
+    <div class="muted small" style="margin-top:7px">${st.pct >= 1 ? t('all_done_today') : st.total ? t('more_to_go', { n: left }) : t('no_meals')}</div>
+  </div>`;
+
+  if (due) {
+    const over = due.mins <= 0;
+    const when = over ? (due.mins > -1 ? t('due_now') : t('overdue_by', { d: fmtMins(-due.mins) })) : t('due_at', { t: timeStr(due.due), d: fmtMins(due.mins) });
+    h += `<div class="due ${over ? 'over' : ''}"><div class="t"><b>${t('after_meal_due', { meal: mealObl(due.meal) })}</b><br><span class="small">${when}</span></div>
+      <button class="primary" data-new="${due.meal}_post">${t('log')}</button></div>`;
+  }
+
+  if (db.meds.length) {
+    const ms = medDayStats(k), pend = doseList(k, true);
+    h += `<div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">${t('meds_title')}</h2><span class="spacer"></span>
+      <span class="small">${t('n_taken', { d: ms.done, t: ms.total })}</span></div>
+      <div class="bar thin ${ms.pct >= 1 ? 'ok' : ''}"><i style="width:${ms.pct * 100}%"></i></div>
+      ${pend || `<div class="small" style="margin-top:10px;color:var(--ok);font-weight:600">${t('all_meds_taken')}</div>`}</div>`;
+  } else {
+    h += `<div class="card setup"><div class="pillicon">💊</div><div style="flex:1" class="small"><b>${t('med_setup_title')}</b><br><span class="muted">${t('med_setup_text')}</span></div><button data-addmed>${t('set_up')}</button></div>`;
+  }
+  h += `<div class="card"><h2>${t('meal_readings')}</h2>`;
+  const meals = MEAL_IDS.filter(m => S().meals[m]);
+  if (!meals.length) h += `<div class="empty-state">${t('turn_on_meal')}</div>`;
+  for (const m of meals) {
+    h += `<div class="meal"><div class="name">${mealName(m)}</div>${slotBtn(list, m + '_pre')}${slotBtn(list, m + '_post')}</div>`;
+  }
+  h += `</div>`;
+
+  const rand = list.filter(r => r.slot === 'random' || !S().meals[SLOT[r.slot]?.meal] && r.slot !== 'random');
+  h += `<div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">${t('random_title')}</h2><span class="spacer"></span>
+    <button data-new="random" style="padding:6px 12px">${t('add_plus')}</button></div>`;
+  h += rand.length ? `<div class="chiplist">${rand.map(r => `<button class="pill s-${classify(r.mg, r.slot)}" data-edit="${r.id}"><b>${fmt(r.mg)}</b><span class="small">${timeStr(r.ts)}</span></button>`).join('')}</div>`
+    : `<div class="muted small">${t('random_hint')}</div>`;
+  h += `</div>`;
+
+  if (list.length) {
+    const avg = list.reduce((a, r) => a + r.mg, 0) / list.length;
+    const inR = list.filter(r => classify(r.mg, r.slot) === 'ok').length;
+    h += `<div class="grid2">
+      <div class="kpi"><div class="n">${fmt(avg)}</div><div class="l">${t('avg_today', { u: unitLabel() })}</div></div>
+      <div class="kpi"><div class="n">${inR}/${list.length}</div><div class="l">${t('in_target_count')}</div></div></div>`;
+  }
+  $('#v-today').innerHTML = h;
+  const bar = $('#todayBar'), to = st.pct;
+  if (REDUCED) bar.style.width = to * 100 + '%';
+  else requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = to * 100 + '%'; }));
+  lastTodayPct = to;
+}
+function slotBtn(list, slotId) {
+  const rs = list.filter(r => r.slot === slotId), s = SLOT[slotId];
+  const lbl = s.kind === 'pre' ? t('before') : t('after2h');
+  if (!rs.length) return `<button class="slot empty" data-new="${slotId}"><span class="lbl">${lbl}</span><span class="v">${t('plus_log')}</span></button>`;
+  const r = rs[rs.length - 1], c = classify(r.mg, r.slot);
+  return `<button class="slot filled s-${c}" data-edit="${r.id}"><span class="lbl">${lbl} · ${timeStr(r.ts)}</span>
+    <span class="v">${fmt(r.mg)} <small>${stText(c)}${rs.length > 1 ? ` · +${rs.length - 1}` : ''}</small></span></button>`;
+}
+
+/* ---------- TIMESHEET ---------- */
+let range = '7';
+try { range = localStorage.getItem(KEY + '.range') || '7'; } catch (e) {}
+function renderSheet() {
+  const days = byDay(), meals = MEAL_IDS.filter(m => S().meals[m]);
+  const tk = todayKey();
+  let keys = [];
+  if (range === 'all') {
+    const all = [...days.keys()].sort();
+    if (all.length) { for (let k = tk; k >= all[0]; k = addDays(k, -1)) keys.push(k); }
+  } else {
+    for (let i = 0; i < Number(range); i++) keys.push(addDays(tk, -i));
+  }
+  let h = `<div class="seg" id="rangeSeg">${['7', '14', '30', '90', 'all']
+    .map(v => `<button data-range="${v}" class="${range === v ? 'on' : ''}">${v === 'all' ? t('all') : t('days_n', { n: v })}</button>`).join('')}</div>`;
+
+  // period summary
+  let sd = 0, stt = 0;
+  keys.forEach(k => { const s = dayStats(days.get(k) || []); sd += s.done; stt += s.total; });
+  const pct = stt ? sd / stt : 0;
+  h += `<div class="card" style="padding:12px 14px"><div class="row" style="margin-bottom:6px"><span class="small"><b>${t('logging_completion')}</b> · ${t('n_days', { n: keys.length })}</span><span class="spacer"></span><b>${sd}/${stt} · ${Math.round(pct * 100)}%</b></div>
+    <div class="bar ${pct >= .9 ? 'ok' : ''}"><i style="width:${pct * 100}%"></i></div></div>`;
+
+  if (!keys.length) { $('#v-sheet').innerHTML = h + `<div class="card empty-state">${t('no_readings_yet')}</div>`; return; }
+
+  h += `<div class="tablewrap"><table><thead><tr><th class="date" rowspan="2">${t('date')}</th>`;
+  meals.forEach(m => h += `<th colspan="2" class="meal-h">${mealName(m)}</th>`);
+  h += `<th rowspan="2">${t('random_col')}</th><th rowspan="2">${t('done')}</th><th rowspan="2">${t('avg')}</th>${db.meds.length ? `<th rowspan="2">${t('meds_col')}</th>` : ''}</tr><tr>`;
+  meals.forEach(() => h += `<th>${t('pre')}</th><th>${t('post2h')}</th>`);
+  h += `</tr></thead><tbody>`;
+  let rowI = 0;
+  for (const k of keys) {
+    const rowDelay = Math.min(rowI++, 20) * 35;
+    const isToday = k === tk;
+    const list = days.get(k) || [], d = keyToDate(k), st = dayStats(list);
+    h += `<tr class="${isToday ? 'today' : ''}" style="--r:${rowDelay}ms"><td class="date"><b>${shortDate(d)}</b><span>${isToday ? t('today') : weekday(d)}</span></td>`;
+    for (const m of meals) for (const kind of ['pre', 'post']) {
+      const sid = `${m}_${kind}`, rs = list.filter(r => r.slot === sid);
+      if (rs.length) {
+        const r = rs[rs.length - 1];
+        h += `<td class="cell" data-edit="${r.id}" title="${esc(timeStr(r.ts) + (r.note ? ' · ' + r.note : ''))}"><span class="val s-${classify(r.mg, sid)}">${fmt(r.mg)}${rs.length > 1 ? '*' : ''}</span></td>`;
+      } else if (isToday) h += `<td class="cell" data-new="${sid}"><span class="add">+</span></td>`;
+      else h += `<td><span class="miss">–</span></td>`;
+    }
+    const rand = list.filter(r => r.slot === 'random' || (SLOT[r.slot]?.meal && !S().meals[SLOT[r.slot].meal]));
+    const randVals = rand.map(r => `<span class="val s-${classify(r.mg, r.slot)}" data-edit="${r.id}" title="${esc(timeStr(r.ts))}">${fmt(r.mg)}</span>`).join('');
+    if (isToday) h += `<td class="cell rand" ${rand.length ? '' : 'data-new="random"'}>${randVals}${rand.length ? '<span class="add" data-new="random" style="padding:0 4px">+</span>' : '<span class="add">+</span>'}</td>`;
+    else h += `<td class="cell rand">${randVals || '<span class="miss">–</span>'}</td>`;
+    const avg = list.length ? fmt(list.reduce((a, r) => a + r.mg, 0) / list.length) : '–';
+    h += `<td class="done"><span class="small"><b>${st.done}</b>/${st.total}</span><div class="bar thin ${st.pct >= 1 ? 'ok' : ''}"><i style="width:${st.pct * 100}%"></i></div></td><td><b>${avg}</b></td>${db.meds.length ? medCell(k) : ''}</tr>`;
+  }
+  h += `</tbody></table></div>
+  <div class="legend"><span><b style="background:var(--ok)"></b>${stText('ok')}</span><span><b style="background:var(--high)"></b>${stText('high')}</span><span><b style="background:var(--vhigh)"></b>${stText('vhigh')}</span><span><b style="background:var(--low)"></b>${stText('low')}</span><span>${t('legend_multi')}</span></div>
+  <p class="muted small">${t('sheet_hint', { u: unitLabel() })}</p>`;
+  $('#v-sheet').innerHTML = h;
+}
+
+/* ---------- PROGRESS / STATS ---------- */
+function renderStats() {
+  const days = byDay(), tk = todayKey();
+  const windowStats = n => {
+    let done = 0, total = 0, full = 0; const rs = [];
+    for (let i = 0; i < n; i++) {
+      const k = addDays(tk, -i), l = days.get(k) || [], s = dayStats(l);
+      done += s.done; total += s.total; if (s.pct >= 1) full++; rs.push(...l);
+    }
+    return { done, total, full, rs, pct: total ? done / total : 0 };
+  };
+  const w7 = windowStats(7), w30 = windowStats(30);
+  const dist = rs => { const c = { low: 0, ok: 0, high: 0, vhigh: 0 }; rs.forEach(r => c[classify(r.mg, r.slot)]++); return c; };
+  const d7 = dist(w7.rs), d30 = dist(w30.rs);
+  const avgOf = (rs, kind) => { const f = rs.filter(r => (SLOT[r.slot]?.kind === kind)); return f.length ? fmt(f.reduce((a, r) => a + r.mg, 0) / f.length) : '–'; };
+
+  let h = `<div class="card"><h2>${t('logging_progress')}</h2>
+    ${statBar(t('last_7'), w7.done, w7.total, t('full_days', { a: w7.full, b: 7 }), 'of_readings')}
+    ${statBar(t('last_30'), w30.done, w30.total, t('full_days', { a: w30.full, b: 30 }), 'of_readings')}
+    <div class="muted small">${t('cur_streak', { n: streak(days) })}</div></div>`;
+
+  if (db.meds.length) {
+    const mw = n => { let done = 0, total = 0, full = 0, dd = 0; for (let i = 0; i < n; i++) { const st = medDayStats(addDays(tk, -i)); done += st.done; total += st.total; if (st.total) dd++; if (st.total && st.pct >= 1) full++; } return { done, total, full, days: dd }; };
+    const m7 = mw(7), m30 = mw(30);
+    h += `<div class="card"><h2>${t('meds_taken_title')}</h2>
+      ${statBar(t('last_7'), m7.done, m7.total, t('full_days', { a: m7.full, b: m7.days }), 'of_doses')}
+      ${statBar(t('last_30'), m30.done, m30.total, t('full_days', { a: m30.full, b: m30.days }), 'of_doses')}</div>`;
+  }
+  h += `<div class="card"><h2>${t('tir_title')}</h2>
+    ${tirBar(t('last_7'), d7, w7.rs.length)}
+    ${tirBar(t('last_30'), d30, w30.rs.length)}
+    <div class="legend"><span><b style="background:var(--low)"></b>${stText('low')}</span><span><b style="background:var(--ok)"></b>${stText('ok')}</span><span><b style="background:var(--high)"></b>${stText('high')}</span><span><b style="background:var(--vhigh)"></b>${stText('vhigh')}</span></div>
+    <div class="muted small" style="margin-top:6px">${t('target_line', { a: fmt(S().preMin), b: fmt(S().preMax), c: fmt(S().postMax), u: unitLabel() })}</div></div>`;
+
+  h += `<div class="card"><h2>${t('avgs_title')}</h2><div class="grid2">
+    <div class="kpi"><div class="n">${avgOf(w7.rs, 'pre')}</div><div class="l">${t('before_meals')}</div></div>
+    <div class="kpi"><div class="n">${avgOf(w7.rs, 'post')}</div><div class="l">${t('after_meals')}</div></div>
+    <div class="kpi"><div class="n">${avgOf(w7.rs, 'random')}</div><div class="l">${t('random')}</div></div>
+    <div class="kpi"><div class="n">${w7.rs.length}</div><div class="l">${t('total_readings')}</div></div></div>
+    <div class="muted small" style="margin-top:8px">${t('last30_avgs', { a: avgOf(w30.rs, 'pre'), b: avgOf(w30.rs, 'post'), u: unitLabel() })}</div></div>`;
+
+  h += `<div class="card"><h2>${t('trend_title')}</h2>${trendChart()}</div>`;
+  $('#v-stats').innerHTML = h;
+}
+function statBar(label, done, total, extra, ofKey) {
+  const p = total ? done / total : 0;
+  return `<div class="stat"><div class="row"><span>${label}</span><span class="spacer"></span><span class="muted small">${extra}</span><b style="min-width:44px;text-align:right"><span class="cu">${Math.round(p * 100)}</span>%</b></div>
+    <div class="bar ${p >= .9 ? 'ok' : p < .5 ? 'warn' : ''}"><i style="width:${p * 100}%"></i></div>
+    <div class="muted small" style="margin-top:3px">${t(ofKey, { d: done, t: total })}</div></div>`;
+}
+function tirBar(label, c, n) {
+  const w = k => n ? (c[k] / n * 100) : 0;
+  return `<div class="stat"><div class="row"><span>${label}</span><span class="spacer"></span><b>${n ? t('pct_in_target', { p: Math.round(c.ok / n * 100) }) : t('no_readings')}</b></div>
+    <div class="stack"><i style="width:${w('low')}%;background:var(--low)"></i><i style="width:${w('ok')}%;background:var(--ok)"></i><i style="width:${w('high')}%;background:var(--high)"></i><i style="width:${w('vhigh')}%;background:var(--vhigh)"></i></div>
+    ${n ? `<div class="muted small" style="margin-top:3px">${t('dist', { l: c.low, o: c.ok, h: c.high + c.vhigh })}</div>` : ''}</div>`;
+}
+function trendChart() {
+  const tk = todayKey(), start = keyToDate(addDays(tk, -13)).getTime(), end = keyToDate(addDays(tk, 1)).getTime();
+  const rs = db.readings.filter(r => r.ts >= start && r.ts < end).sort((a, b) => a.ts - b.ts);
+  if (!rs.length) return `<div class="empty-state">${t('trend_empty')}</div>`;
+  const W = 340, H = 170, L = 28, R = 6, T = 8, B = 20;
+  const maxMg = Math.max(300, ...rs.map(r => r.mg)), minMg = Math.min(50, ...rs.map(r => r.mg));
+  const x = ts => L + (ts - start) / (end - start) * (W - L - R);
+  const y = mg => T + (1 - (mg - minMg) / (maxMg - minMg)) * (H - T - B);
+  const s = S();
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(t('trend_aria'))}">`;
+  g += `<rect x="${L}" y="${y(s.postMax)}" width="${W - L - R}" height="${y(s.low) - y(s.postMax)}" fill="var(--ok)" opacity=".1"/>`;
+  for (const v of [s.low, s.preMax, s.postMax, s.veryHigh]) {
+    if (v > maxMg || v < minMg) continue;
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)" stroke-dasharray="3 3"/><text x="${L - 4}" y="${y(v) + 3}" text-anchor="end">${fmt(v)}</text>`;
+  }
+  for (let i = 0; i < 14; i += 2) {
+    const d = keyToDate(addDays(tk, -13 + i));
+    g += `<text x="${x(d.getTime() + 43200000)}" y="${H - 5}" text-anchor="middle">${d.getDate()}/${d.getMonth() + 1}</text>`;
+  }
+  g += `<polyline class="draw" pathLength="1" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity=".55" points="${rs.map(r => `${x(r.ts).toFixed(1)},${y(r.mg).toFixed(1)}`).join(' ')}"/>`;
+  const col = { ok: 'var(--ok)', low: 'var(--low)', high: 'var(--high)', vhigh: 'var(--vhigh)' };
+  let dotI = 0;
+  for (const r of rs) {
+    const k = SLOT[r.slot]?.kind, dd = Math.min(dotI++, 60) * 18;
+    g += `<circle style="--c:${dd}ms" cx="${x(r.ts).toFixed(1)}" cy="${y(r.mg).toFixed(1)}" r="${k === 'post' ? 3.6 : 3}" fill="${k === 'post' ? col[classify(r.mg, r.slot)] : 'var(--card)'}" stroke="${col[classify(r.mg, r.slot)]}" stroke-width="1.6"><title>${fmt(r.mg)} · ${esc(slotLabel(r.slot))} · ${esc(dateTimeStr(r.ts))}</title></circle>`;
+  }
+  g += `</svg><div class="legend"><span>${t('lg_before')}</span><span>${t('lg_after')}</span><span><b style="background:var(--ok);opacity:.35"></b>${t('lg_band')}</span></div>`;
+  return g;
+}
+
+/* ---------- SETTINGS ---------- */
+function renderSettings() {
+  const s = S(), u = unitLabel();
+  const num = (id, v, label) => `<div class="field"><div><div>${label}</div></div><input type="number" step="any" inputmode="decimal" data-set="${id}" value="${fmt(v)}"></div>`;
+  $('#v-settings').innerHTML = `
+  <div class="card"><h2>Language / भाषा</h2>
+    <div class="seg" style="margin:0"><button data-lang="en" class="${lang() === 'en' ? 'on' : ''}">English</button><button data-lang="hi" class="${lang() === 'hi' ? 'on' : ''}">हिंदी</button></div></div>
+  <div class="card"><h2>${t('units')}</h2>
+    <div class="seg" style="margin:0"><button data-unit="mgdl" class="${s.unit === 'mgdl' ? 'on' : ''}">mg/dL</button><button data-unit="mmol" class="${s.unit === 'mmol' ? 'on' : ''}">mmol/L</button></div></div>
+  <div class="card"><h2>${t('meals_track')}</h2>
+    ${MEAL_IDS.map(m => `<label class="field"><span>${mealName(m)} <span class="muted small">${t('before_after')}</span></span><input type="checkbox" data-meal="${m}" ${s.meals[m] ? 'checked' : ''}></label>`).join('')}
+    <div class="field"><div><div>${t('after_meal_rem')}</div><div class="muted small">${t('after_meal_rem_sub')}</div></div><input type="number" inputmode="numeric" data-gap value="${s.gapMin}"></div>
+  </div>
+  <div class="card"><h2>${t('target_ranges', { u })}</h2>
+    ${num('preMin', s.preMin, t('t_preMin'))}
+    ${num('preMax', s.preMax, t('t_preMax'))}
+    ${num('postMax', s.postMax, t('t_postMax'))}
+    ${num('low', s.low, t('t_low'))}
+    ${num('veryHigh', s.veryHigh, t('t_veryHigh'))}
+    <div class="muted small" style="margin-top:6px">${t('targets_note')}</div>
+    <button style="margin-top:10px" id="resetTargets">${t('reset_defaults')}</button>
+  </div>
+  <div class="card"><h2>${t('your_data')}</h2>
+    <p class="muted small" style="margin-top:0">${t('data_note', { n: db.readings.length })}</p>
+    <div class="btns">
+      <button class="primary" id="exportCsv">${t('export_csv')}</button>
+      <button id="exportMeds">${t('meds_csv')}</button>
+      <button id="exportJson">${t('backup')}</button>
+      <button id="importJson">${t('restore')}</button>
+      <button class="danger" id="clearAll">${t('delete_all')}</button>
+    </div>
+  </div>
+  <p class="muted small" style="text-align:center">${t('footer')}</p>`;
+}
+document.getElementById('v-settings').addEventListener('change', e => {
+  const el = e.target, s = S();
+  if (el.dataset.meal) { s.meals[el.dataset.meal] = el.checked; }
+  else if (el.hasAttribute('data-gap')) { const v = parseInt(el.value, 10); if (v > 0 && v < 600) s.gapMin = v; }
+  else if (el.dataset.set) { const v = parseFloat(el.value); if (v > 0) s[el.dataset.set] = Math.round(toMg(v)); }
+  save(); toast(t('saved')); renderSettings();
+});
+document.getElementById('v-settings').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.lang) { setLang(b.dataset.lang); return; }
+  if (b.dataset.unit) { S().unit = b.dataset.unit; save(); renderSettings(); return; }
+  switch (b.id) {
+    case 'resetTargets': Object.assign(S(), { low: DEFAULTS.low, preMin: DEFAULTS.preMin, preMax: DEFAULTS.preMax, postMax: DEFAULTS.postMax, veryHigh: DEFAULTS.veryHigh }); save(); renderSettings(); toast(t('targets_reset')); break;
+    case 'exportCsv': exportCsv(); break;
+    case 'exportMeds': exportMedsCsv(); break;
+    case 'exportJson': download(`sugar-log-backup-${todayKey()}.json`, JSON.stringify(db, null, 1), 'application/json'); break;
+    case 'importJson': $('#importFile').click(); break;
+    case 'clearAll':
+      if (confirm(t('confirm_clear', { n: db.readings.length }))) { db.readings = []; save(); renderSettings(); toast(t('all_deleted')); }
+      break;
+  }
+});
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.readings)) throw new Error();
+    const ids = new Set(db.readings.map(r => r.id)); let added = 0;
+    for (const r of d.readings) if (r && r.id && typeof r.mg === 'number' && typeof r.ts === 'number' && SLOT[r.slot] && !ids.has(r.id)) { db.readings.push(r); added++; }
+    const mi = new Set(db.meds.map(m => m.id)), di = new Set(db.doses.map(x => x.id));
+    (Array.isArray(d.meds) ? d.meds : []).forEach(m => { if (m && m.id && m.name && Array.isArray(m.times) && !mi.has(m.id)) db.meds.push(m); });
+    (Array.isArray(d.doses) ? d.doses : []).forEach(x => { if (x && x.id && x.medId && DS[x.slot] && x.day && !di.has(x.id)) db.doses.push(x); });
+    save(); renderSettings(); toast(t('restored', { n: added }));
+  } catch (err) { toast(t('bad_backup')); }
+  e.target.value = '';
+});
+function exportCsv() {
+  const rows = [[t('csv_date'), t('csv_time'), t('csv_type'), t('csv_value', { u: unitLabel() }), t('csv_mg'), t('csv_status'), t('csv_note')]];
+  [...db.readings].sort((a, b) => a.ts - b.ts).forEach(r => rows.push([dayKey(r.ts), timeStr(r.ts), slotLabel(r.slot), fmt(r.mg), Math.round(r.mg), stText(classify(r.mg, r.slot)), r.note || '']));
+  // ﻿ makes Excel open Hindi text correctly
+  download(`sugar-log-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n'), 'text/csv');
+}
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- ENTRY DIALOG (date & time come from the phone automatically) ---------- */
+const dlg = $('#entry');
+let editing = null, selSlot = 'random', whenTimer = null;
+function suggestSlot() {
+  const list = byDay().get(todayKey()) || [];
+  const due = dueInfo(list);
+  if (due && due.mins <= 30) return due.meal + '_post';
+  const hr = new Date().getHours();
+  const m = hr < 11 ? 'b' : hr < 17 ? 'l' : 'd';
+  if (!S().meals[m]) return 'random';
+  if (!list.some(r => r.slot === m + '_pre')) return m + '_pre';
+  if (!list.some(r => r.slot === m + '_post')) return m + '_post';
+  return 'random';
+}
+function renderWhen() {
+  $('#fWhen').innerHTML = editing
+    ? `🕒 ${esc(t('when_saved', { t: dateTimeStr(editing.ts) }))}`
+    : `🕒 <b>${esc(t('when_now', { t: dateTimeStr(Date.now()) }))}</b><br><span class="small muted">${esc(t('when_now_sub'))}</span>`;
+}
+function openEntry({ id, slot } = {}) {
+  editing = id ? db.readings.find(r => r.id === id) : null;
+  $('#entryTitle').textContent = editing ? t('edit_reading') : t('new_reading');
+  $('#fDel').classList.toggle('hidden', !editing);
+  $('#fUnit').textContent = unitLabel();
+  $('#fVal').step = S().unit === 'mmol' ? '0.1' : '1';
+  if (editing) {
+    selSlot = editing.slot; $('#fVal').value = fmt(editing.mg); $('#fNote').value = editing.note || '';
+  } else {
+    selSlot = slot || suggestSlot();
+    $('#fVal').value = ''; $('#fNote').value = '';
+  }
+  renderSlotChips(); updateStatus(); renderWhen();
+  clearInterval(whenTimer); if (!editing) whenTimer = setInterval(renderWhen, 15000);
+  dlg.showModal();
+  if (!editing) setTimeout(() => $('#fVal').focus(), 60);
+}
+dlg.addEventListener('close', () => clearInterval(whenTimer));
+function renderSlotChips() {
+  const opts = SLOTS.filter(s => s.kind === 'random' || S().meals[s.meal] || s.id === selSlot);
+  $('#fSlots').innerHTML = opts.map(s => `<button type="button" data-slot="${s.id}" class="${s.id === selSlot ? 'on' : ''}">${slotLabel(s.id)}</button>`).join('');
+}
+function updateStatus() {
+  const v = parseFloat($('#fVal').value), el = $('#fStatus');
+  if (!(v > 0)) { el.textContent = ''; el.className = ''; return; }
+  const c = classify(toMg(v), selSlot);
+  el.textContent = stText(c) + (c === 'low' ? t('low_advice') : '');
+  el.className = 'c-' + c;
+}
+$('#fSlots').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; selSlot = b.dataset.slot; renderSlotChips(); updateStatus(); });
+$('#fVal').addEventListener('input', updateStatus);
+$('#fCancel').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+$('#fDel').addEventListener('click', () => {
+  if (!editing || !confirm(t('confirm_del_reading'))) return;
+  db.readings = db.readings.filter(r => r.id !== editing.id); save(); dlg.close(); render(); toast(t('reading_deleted'));
+});
+$('#entryForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = parseFloat($('#fVal').value);
+  if (!(v > 0)) { toast(t('enter_reading')); return; }
+  const mg = Math.round(toMg(v) * 10) / 10;
+  if (mg < 10 || mg > 800) { toast(t('value_off', { u: unitLabel() })); return; }
+  // New readings are stamped with the phone's current date & time; edits keep their original time.
+  const ts = editing ? editing.ts : Date.now();
+  const rec = { mg, ts, slot: selSlot, note: $('#fNote').value.trim() };
+  const beforePct = dayStats(byDay().get(todayKey()) || []).pct;
+  let savedId;
+  if (editing) { Object.assign(editing, rec); savedId = editing.id; }
+  else { savedId = uid(); db.readings.push({ id: savedId, ...rec }); }
+  save(); dlg.close(); render();
+  const el = document.querySelector(`#v-${view} [data-edit="${savedId}"]`);
+  if (el && !REDUCED) { const tg = el.querySelector('.val') || el; tg.classList.remove('pop'); void tg.offsetWidth; tg.classList.add('pop'); }
+  const afterPct = dayStats(byDay().get(todayKey()) || []).pct;
+  if (beforePct < 1 && afterPct >= 1) { confetti(); setTimeout(() => toast(t('all_readings_done')), 900); }
+  try { navigator.vibrate && navigator.vibrate(20); } catch (er) {}
+  toast(t(editing ? 'updated_r' : 'saved_r', { v: fmt(mg), u: unitLabel(), s: stText(classify(mg, selSlot)) }));
+});
+
+/* global click delegation */
+document.querySelector('main').addEventListener('click', e => {
+  const dz = e.target.closest('[data-dose]');
+  if (dz) {
+    const [mid, sl, dk] = dz.dataset.dose.split('|');
+    const was = !!taken(dk, mid, sl), before = medDayStats(dk).pct;
+    toggleDose(mid, sl, dk); render();
+    const tg = document.querySelector(`#v-${view} [data-dose="${dz.dataset.dose}"]`);
+    if (tg && !REDUCED) { tg.classList.remove('pop'); void tg.offsetWidth; tg.classList.add('pop'); }
+    if (!was) {
+      try { navigator.vibrate && navigator.vibrate(20); } catch (er) {}
+      const med = db.meds.find(m => m.id === mid);
+      if (before < 1 && medDayStats(dk).pct >= 1 && dk === todayKey()) { confetti(); toast(t('all_meds_toast')); }
+      else toast(t('dose_taken_toast', { name: med ? med.name : '' }));
+    } else toast(t('dose_untaken_toast'));
+    return;
+  }
+  if (e.target.closest('[data-addmed]')) { openMed(); return; }
+  const em = e.target.closest('[data-editmed]'); if (em) { openMed(em.dataset.editmed); return; }
+  if (e.target.closest('#notifBtn')) { toggleNotify(); return; }
+  const ed = e.target.closest('[data-edit]'); if (ed) { openEntry({ id: ed.dataset.edit }); return; }
+  const nw = e.target.closest('[data-new]'); if (nw) { openEntry({ slot: nw.dataset.new }); return; }
+  const rg = e.target.closest('[data-range]');
+  if (rg) { range = rg.dataset.range; try { localStorage.setItem(KEY + '.range', range); } catch (er) {} renderSheet(); animateIn($('#v-sheet')); }
+});
+$('#fab').addEventListener('click', () => openEntry());
+
+/* keep "due" banner and date fresh */
+setInterval(() => {
+  const busy = dlg.open || medDlg.open || (document.activeElement && document.activeElement.matches('input'));
+  if (!busy && view === 'today') renderToday();
+  if (!busy && view === 'meds') renderMeds();
+  updateFab(); checkReminders();
+}, 30000);
+setTimeout(checkReminders, 1500);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !dlg.open && !medDlg.open) render(); });
+
+applyStatic();
+show(['today', 'sheet', 'stats', 'meds', 'settings'].includes(view) ? view : 'today');
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
