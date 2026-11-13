@@ -146,6 +146,7 @@ dialog label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
 .toast.show{opacity:1}
 /* ---------- header button ---------- */
 .hdr{display:flex;align-items:center;gap:10px}
+.logo{width:40px;height:40px;border-radius:11px;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.55),0 3px 8px rgba(120,40,0,.25)}
 .hdr-btn{background:rgba(255,255,255,.4);border:0;border-radius:12px;padding:8px;color:var(--on-accent);display:grid;place-items:center}
 .hdr-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hdr-btn.on{background:#fff}
@@ -218,6 +219,7 @@ td .miss{color:var(--border);font-weight:700}
 </head>
 <body>
 <header><div class="hdr">
+  <img class="logo" src="icon.svg?v=laddoo" alt="" width="40" height="40">
   <div style="flex:1;min-width:0"><h1 data-i18n="appName">Meetha Kam Karo</h1><div class="sub" id="hdrSub"></div></div>
   <button class="hdr-btn lang" id="langBtn" data-i18n="lang_btn" data-i18n-aria="lang_aria">हिंदी</button>
   <button class="hdr-btn" data-view="settings" data-i18n-aria="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
