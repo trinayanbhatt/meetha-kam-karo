@@ -1,1 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f97316"/><stop offset="1" stop-color="#facc15"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><path d="M256 92c0 0-120 140-120 222a120 120 0 0 0 240 0c0-82-120-222-120-222z" fill="#fff"/><path d="M200 318h34l16-34 22 62 16-28h26" fill="none" stroke="#ea580c" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ea580c"/>
+      <stop offset="1" stop-color="#fb923c"/>
+    </linearGradient>
+    <radialGradient id="laddoo" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#fef9c3"/>
+      <stop offset="0.45" stop-color="#fde047"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </radialGradient>
+  </defs>
+  <!-- background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- soft shadow under the laddoo -->
+  <ellipse cx="256" cy="420" rx="128" ry="20" fill="#7c2d12" opacity=".25"/>
+  <!-- the laddoo -->
+  <circle cx="256" cy="272" r="150" fill="url(#laddoo)" stroke="#9a3412" stroke-width="10"/>
+  <!-- boondi texture -->
+  <g fill="#d97706" opacity=".55">
+    <circle cx="170" cy="176" r="9"/><circle cx="214" cy="150" r="8"/><circle cx="262" cy="142" r="9"/>
+    <circle cx="310" cy="152" r="8"/><circle cx="350" cy="182" r="9"/><circle cx="140" cy="226" r="8"/>
+    <circle cx="374" cy="232" r="8"/><circle cx="132" cy="290" r="9"/><circle cx="384" cy="290" r="9"/>
+    <circle cx="150" cy="346" r="8"/><circle cx="364" cy="346" r="8"/><circle cx="196" cy="390" r="9"/>
+    <circle cx="256" cy="404" r="8"/><circle cx="316" cy="390" r="9"/><circle cx="238" cy="180" r="6"/>
+    <circle cx="290" cy="186" r="6"/>
+  </g>
+  <!-- worried eyebrows -->
+  <g fill="none" stroke="#3b1d00" stroke-width="11" stroke-linecap="round">
+    <path d="M176 232 L226 212"/>
+    <path d="M336 232 L286 212"/>
+  </g>
+  <!-- eyes -->
+  <ellipse cx="206" cy="268" rx="15" ry="20" fill="#3b1d00"/>
+  <ellipse cx="306" cy="268" rx="15" ry="20" fill="#3b1d00"/>
+  <circle cx="211" cy="261" r="5" fill="#fff"/>
+  <circle cx="311" cy="261" r="5" fill="#fff"/>
+  <!-- blush -->
+  <ellipse cx="172" cy="312" rx="20" ry="12" fill="#fb7185" opacity=".5"/>
+  <ellipse cx="340" cy="312" rx="20" ry="12" fill="#fb7185" opacity=".5"/>
+  <!-- wobbly worried mouth -->
+  <path d="M214 338 q14 -14 28 0 q14 14 28 0 q14 -14 28 0" fill="none" stroke="#3b1d00" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- nervous sweat drop -->
+  <path d="M392 160 c0 0 -26 34 -26 52 a26 26 0 0 0 52 0 c0 -18 -26 -52 -26 -52z" fill="#7dd3fc" stroke="#0369a1" stroke-width="6" stroke-linejoin="round"/>
+  <ellipse cx="383" cy="210" rx="6" ry="9" fill="#fff" opacity=".8"/>
+</svg>
