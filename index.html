@@ -212,6 +212,12 @@ header{background-size:200% 100%!important;animation:shine 8s ease-in-out infini
 .when{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);font-size:14px;line-height:1.4}
 nav button.add:focus-visible{outline:none}
 nav button.add:focus-visible .circle{outline:3px solid var(--accent);outline-offset:3px}
+.linkbtn{background:none;border:0;padding:6px 0 0;color:var(--accent);font-weight:650;font-size:13.5px;text-decoration:underline;text-underline-offset:3px;border-radius:0}
+.past{margin-top:10px}
+.past .chips{margin-bottom:8px}
+.past label{margin-top:8px}
+#fDate{margin-bottom:2px}
+sup.late{font-size:10px;margin-left:1px;color:var(--muted);font-weight:600}
 td .miss{color:var(--border);font-weight:700}
 .hidden{display:none!important}
 .empty-state{text-align:center;padding:22px 10px;color:var(--muted)}
@@ -250,6 +256,13 @@ td .miss{color:var(--border);font-weight:700}
     <label data-i18n="when_taken">When was it taken?</label>
     <div class="chips" id="fSlots"></div>
     <div class="when" id="fWhen"></div>
+    <div class="past hidden" id="fPast">
+      <div class="chips" id="fDays"></div>
+      <input type="date" id="fDate" class="hidden">
+      <label for="fTime" data-i18n="past_time">Time</label>
+      <input type="time" id="fTime">
+      <div class="muted small" style="margin-top:6px" data-i18n="past_hint">You can add readings from the last 7 days.</div>
+    </div>
     <label for="fNote" data-i18n="note_opt">Note (optional)</label>
     <input id="fNote" type="text" data-i18n-ph="note_ph" placeholder="e.g. rice for lunch, 20 min walk">
     <div class="row" style="margin-top:16px">
@@ -319,7 +332,7 @@ const I18N = {
     no_readings_yet: 'No readings yet. Tap + to log your first one.',
     date: 'Date', pre: 'Pre', post2h: '2h Post', random_col: 'Random', done: 'Done', avg: 'Avg', meds_col: '💊 Meds', today: 'Today',
     legend_multi: '* more than one reading — tap to see the latest',
-    sheet_hint: "Values in {u}. Tap an empty cell in today's row to log a reading, or tap any value to edit it.",
+    sheet_hint: 'Values in {u}. Tap an empty cell from the last 7 days to fill it in, or tap any value to edit it.',
     logging_progress: 'Logging progress', last_7: 'Last 7 days', last_30: 'Last 30 days', full_days: '{a}/{b} full days',
     cur_streak: '🔥 Current streak: <b>{n}</b> days with every scheduled reading logged',
     meds_taken_title: '💊 Medicines taken', of_readings: '{d} of {t} scheduled readings', of_doses: '{d} of {t} doses',
@@ -367,6 +380,12 @@ const I18N = {
     csv_date: 'Date', csv_time: 'Time', csv_type: 'Reading type', csv_value: 'Value ({u})', csv_mg: 'Value (mg/dL)', csv_status: 'Status',
     csv_note: 'Note', csv_med: 'Medicine', csv_dose: 'Dose', csv_taken_at: 'Taken at', csv_taken: 'Taken', csv_due: 'Due',
     fmt_hm: '{h}h {m}m', fmt_min: '{m} min',
+    past_link: 'Missed one? Add an earlier reading', past_title: 'Earlier reading', past_use_now: 'Use the current time instead',
+    day_yday: 'Yesterday', day_pick: '📅 Pick date', past_time: 'Time', past_hint: 'You can add readings from the last 7 days.',
+    no_future: "That time hasn't happened yet — pick an earlier time", past_range: 'Only the last 7 days can be filled in',
+    pick_time_past: 'Pick a time', added_later: 'added later', legend_late: '✎ added later',
+    dup_confirm: "There's already {v} {u} for {slot} on {d}.\n\nOK = replace it\nCancel = keep both",
+    csv_entry: 'Entry', csv_late: 'Added later', csv_live: 'Real-time',
   },
   hi: {
     appName: 'मीठा कम करो', lang_btn: 'English', lang_aria: 'भाषा अंग्रेज़ी में बदलें', lang_switched: 'भाषा: हिंदी',
@@ -399,7 +418,7 @@ const I18N = {
     no_readings_yet: 'अभी कोई रीडिंग नहीं है। पहली रीडिंग के लिए + दबाएँ।',
     date: 'तारीख़', pre: 'पहले', post2h: '2 घं बाद', random_col: 'रैंडम', done: 'पूरा', avg: 'औसत', meds_col: '💊 दवाई', today: 'आज',
     legend_multi: '* एक से ज़्यादा रीडिंग — ताज़ा रीडिंग देखने के लिए दबाएँ',
-    sheet_hint: 'मान {u} में। आज की पंक्ति के खाली खाने को दबाकर रीडिंग दर्ज करें, या किसी मान को बदलने के लिए उसे दबाएँ।',
+    sheet_hint: 'मान {u} में। पिछले 7 दिनों के किसी खाली खाने को दबाकर रीडिंग भरें, या किसी मान को बदलने के लिए उसे दबाएँ।',
     logging_progress: 'रीडिंग की प्रगति', last_7: 'पिछले 7 दिन', last_30: 'पिछले 30 दिन', full_days: '{a}/{b} पूरे दिन',
     cur_streak: '🔥 लगातार <b>{n}</b> दिन सभी तय रीडिंग दर्ज हुईं',
     meds_taken_title: '💊 ली गई दवाइयाँ', of_readings: '{t} में से {d} तय रीडिंग', of_doses: '{t} में से {d} खुराक',
@@ -447,6 +466,12 @@ const I18N = {
     csv_date: 'तारीख़', csv_time: 'समय', csv_type: 'रीडिंग का प्रकार', csv_value: 'मान ({u})', csv_mg: 'मान (mg/dL)', csv_status: 'स्थिति',
     csv_note: 'नोट', csv_med: 'दवाई', csv_dose: 'खुराक', csv_taken_at: 'कब ली', csv_taken: 'ली', csv_due: 'बाकी',
     fmt_hm: '{h} घं {m} मि', fmt_min: '{m} मिनट',
+    past_link: 'कोई रीडिंग छूट गई? पहले की रीडिंग जोड़ें', past_title: 'पहले की रीडिंग', past_use_now: 'इसके बजाय अभी का समय लें',
+    day_yday: 'कल', day_pick: '📅 तारीख़ चुनें', past_time: 'समय', past_hint: 'पिछले 7 दिनों तक की रीडिंग जोड़ सकते हैं।',
+    no_future: 'यह समय अभी आया नहीं है — पहले का समय चुनें', past_range: 'सिर्फ़ पिछले 7 दिनों की रीडिंग जोड़ी जा सकती है',
+    pick_time_past: 'समय चुनें', added_later: 'बाद में जोड़ी', legend_late: '✎ बाद में जोड़ी गई',
+    dup_confirm: '{d} को {slot} के लिए पहले से {v} {u} दर्ज है।\n\nOK = इसे बदलें\nCancel = दोनों रखें',
+    csv_entry: 'प्रविष्टि', csv_late: 'बाद में जोड़ी', csv_live: 'उसी समय',
   },
 };
 const lang = () => (db && db.settings && I18N[db.settings.lang]) ? db.settings.lang : 'en';
@@ -933,7 +958,7 @@ function slotBtn(list, slotId) {
   const lbl = s.kind === 'pre' ? t('before') : t('after2h');
   if (!rs.length) return `<button class="slot empty" data-new="${slotId}"><span class="lbl">${lbl}</span><span class="v">${t('plus_log')}</span></button>`;
   const r = rs[rs.length - 1], c = classify(r.mg, r.slot);
-  return `<button class="slot filled s-${c}" data-edit="${r.id}"><span class="lbl">${lbl} · ${timeStr(r.ts)}</span>
+  return `<button class="slot filled s-${c}" data-edit="${r.id}"><span class="lbl">${lbl} · ${timeStr(r.ts)}${r.late ? ' ✎' : ''}</span>
     <span class="v">${fmt(r.mg)} <small>${stText(c)}${rs.length > 1 ? ` · +${rs.length - 1}` : ''}</small></span></button>`;
 }
 
@@ -970,26 +995,26 @@ function renderSheet() {
   let rowI = 0;
   for (const k of keys) {
     const rowDelay = Math.min(rowI++, 20) * 35;
-    const isToday = k === tk;
+    const isToday = k === tk, canFill = k >= minBackfillDay();
     const list = days.get(k) || [], d = keyToDate(k), st = dayStats(list);
     h += `<tr class="${isToday ? 'today' : ''}" style="--r:${rowDelay}ms"><td class="date"><b>${shortDate(d)}</b><span>${isToday ? t('today') : weekday(d)}</span></td>`;
     for (const m of meals) for (const kind of ['pre', 'post']) {
       const sid = `${m}_${kind}`, rs = list.filter(r => r.slot === sid);
       if (rs.length) {
         const r = rs[rs.length - 1];
-        h += `<td class="cell" data-edit="${r.id}" title="${esc(timeStr(r.ts) + (r.note ? ' · ' + r.note : ''))}"><span class="val s-${classify(r.mg, sid)}">${fmt(r.mg)}${rs.length > 1 ? '*' : ''}</span></td>`;
-      } else if (isToday) h += `<td class="cell" data-new="${sid}"><span class="add">+</span></td>`;
+        h += `<td class="cell" data-edit="${r.id}" title="${esc(timeStr(r.ts) + (r.late ? ' · ' + t('added_later') : '') + (r.note ? ' · ' + r.note : ''))}"><span class="val s-${classify(r.mg, sid)}">${fmt(r.mg)}${r.late ? '<sup class="late">✎</sup>' : ''}${rs.length > 1 ? '*' : ''}</span></td>`;
+      } else if (canFill) h += `<td class="cell" data-new="${sid}" data-day="${k}"><span class="add">+</span></td>`;
       else h += `<td><span class="miss">–</span></td>`;
     }
     const rand = list.filter(r => r.slot === 'random' || (SLOT[r.slot]?.meal && !S().meals[SLOT[r.slot].meal]));
-    const randVals = rand.map(r => `<span class="val s-${classify(r.mg, r.slot)}" data-edit="${r.id}" title="${esc(timeStr(r.ts))}">${fmt(r.mg)}</span>`).join('');
-    if (isToday) h += `<td class="cell rand" ${rand.length ? '' : 'data-new="random"'}>${randVals}${rand.length ? '<span class="add" data-new="random" style="padding:0 4px">+</span>' : '<span class="add">+</span>'}</td>`;
+    const randVals = rand.map(r => `<span class="val s-${classify(r.mg, r.slot)}" data-edit="${r.id}" title="${esc(timeStr(r.ts))}">${fmt(r.mg)}${r.late ? '<sup class="late">✎</sup>' : ''}</span>`).join('');
+    if (canFill) h += `<td class="cell rand" ${rand.length ? '' : `data-new="random" data-day="${k}"`}>${randVals}${rand.length ? `<span class="add" data-new="random" data-day="${k}" style="padding:0 4px">+</span>` : '<span class="add">+</span>'}</td>`;
     else h += `<td class="cell rand">${randVals || '<span class="miss">–</span>'}</td>`;
     const avg = list.length ? fmt(list.reduce((a, r) => a + r.mg, 0) / list.length) : '–';
     h += `<td class="done"><span class="small"><b>${st.done}</b>/${st.total}</span><div class="bar thin ${st.pct >= 1 ? 'ok' : ''}"><i style="width:${st.pct * 100}%"></i></div></td><td><b>${avg}</b></td>${db.meds.length ? medCell(k) : ''}</tr>`;
   }
   h += `</tbody></table></div>
-  <div class="legend"><span><b style="background:var(--ok)"></b>${stText('ok')}</span><span><b style="background:var(--high)"></b>${stText('high')}</span><span><b style="background:var(--vhigh)"></b>${stText('vhigh')}</span><span><b style="background:var(--low)"></b>${stText('low')}</span><span>${t('legend_multi')}</span></div>
+  <div class="legend"><span><b style="background:var(--ok)"></b>${stText('ok')}</span><span><b style="background:var(--high)"></b>${stText('high')}</span><span><b style="background:var(--vhigh)"></b>${stText('vhigh')}</span><span><b style="background:var(--low)"></b>${stText('low')}</span><span>${t('legend_multi')}</span><span>${t('legend_late')}</span></div>
   <p class="muted small">${t('sheet_hint', { u: unitLabel() })}</p>`;
   $('#v-sheet').innerHTML = h;
 }
@@ -1151,8 +1176,8 @@ $('#importFile').addEventListener('change', async e => {
   e.target.value = '';
 });
 function exportCsv() {
-  const rows = [[t('csv_date'), t('csv_time'), t('csv_type'), t('csv_value', { u: unitLabel() }), t('csv_mg'), t('csv_status'), t('csv_note')]];
-  [...db.readings].sort((a, b) => a.ts - b.ts).forEach(r => rows.push([dayKey(r.ts), timeStr(r.ts), slotLabel(r.slot), fmt(r.mg), Math.round(r.mg), stText(classify(r.mg, r.slot)), r.note || '']));
+  const rows = [[t('csv_date'), t('csv_time'), t('csv_type'), t('csv_value', { u: unitLabel() }), t('csv_mg'), t('csv_status'), t('csv_note'), t('csv_entry')]];
+  [...db.readings].sort((a, b) => a.ts - b.ts).forEach(r => rows.push([dayKey(r.ts), timeStr(r.ts), slotLabel(r.slot), fmt(r.mg), Math.round(r.mg), stText(classify(r.mg, r.slot)), r.note || '', r.late ? t('csv_late') : t('csv_live')]));
   // ﻿ makes Excel open Hindi text correctly
   download(`meetha-kam-karo-readings-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n'), 'text/csv');
 }
@@ -1166,6 +1191,57 @@ function download(name, text, type) {
 /* ---------- ENTRY DIALOG (date & time come from the phone automatically) ---------- */
 const dlg = $('#entry');
 let editing = null, selSlot = 'random', whenTimer = null;
+/* backfill ("earlier reading") state */
+const BACKFILL_DAYS = 7;
+const SLOT_HOUR = { b_pre: 8, b_post: 10, l_pre: 13, l_post: 15, d_pre: 20, d_post: 22 };
+const minBackfillDay = () => addDays(todayKey(), -BACKFILL_DAYS);
+let pastMode = false, pastDay = null, pickOpen = false, timeTouched = false;
+function defaultTime(slot, day) {
+  const now = new Date();
+  let h = SLOT_HOUR[slot], m = 0;
+  if (h === undefined) { h = now.getHours(); m = now.getMinutes(); }
+  if (day === todayKey()) {                 // never suggest a time that hasn't happened yet
+    const cand = keyToDate(day); cand.setHours(h, m, 0, 0);
+    if (cand.getTime() > now.getTime()) { h = now.getHours(); m = now.getMinutes(); }
+  }
+  return `${pad(h)}:${pad(m)}`;
+}
+function renderPast() {
+  const box = $('#fPast');
+  box.classList.toggle('hidden', !pastMode || !!editing);
+  if (!pastMode || editing) return;
+  const tk = todayKey(), yk = addDays(tk, -1);
+  const which = pickOpen ? 'pick' : pastDay === tk ? 'today' : pastDay === yk ? 'yday' : 'pick';
+  const pickLabel = which === 'pick' && pastDay ? `📅 ${shortDate(keyToDate(pastDay))}` : t('day_pick');
+  $('#fDays').innerHTML = [['today', t('today')], ['yday', t('day_yday')], ['pick', pickLabel]]
+    .map(([id, l]) => `<button type="button" data-pday="${id}" class="${which === id ? 'on' : ''}">${l}</button>`).join('');
+  const dt = $('#fDate');
+  dt.min = minBackfillDay(); dt.max = tk; dt.value = pastDay;
+  dt.classList.toggle('hidden', which !== 'pick');
+  if (!timeTouched) $('#fTime').value = defaultTime(selSlot, pastDay);
+}
+function setPastMode(on) {
+  pastMode = on; timeTouched = false;
+  if (on && !pastDay) pastDay = todayKey();
+  renderWhen(); renderPast();
+}
+$('#fWhen').addEventListener('click', e => { const b = e.target.closest('[data-past]'); if (b) setPastMode(b.dataset.past === 'on'); });
+$('#fDays').addEventListener('click', e => {
+  const b = e.target.closest('[data-pday]'); if (!b) return;
+  const id = b.dataset.pday;
+  if (id === 'today') { pastDay = todayKey(); pickOpen = false; }
+  else if (id === 'yday') { pastDay = addDays(todayKey(), -1); pickOpen = false; }
+  else { pickOpen = true; }
+  renderPast();
+  if (id === 'pick') { try { $('#fDate').showPicker(); } catch (er) { $('#fDate').focus(); } }
+});
+$('#fDate').addEventListener('change', e => {
+  const v = e.target.value;
+  if (!v) return;
+  if (v < minBackfillDay() || v > todayKey()) { toast(t('past_range')); e.target.value = pastDay; return; }
+  pastDay = v; renderPast();
+});
+$('#fTime').addEventListener('input', () => { timeTouched = true; });
 function suggestSlot() {
   const list = byDay().get(todayKey()) || [];
   const due = dueInfo(list);
@@ -1179,10 +1255,15 @@ function suggestSlot() {
 }
 function renderWhen() {
   $('#fWhen').innerHTML = editing
-    ? `🕒 ${esc(t('when_saved', { t: dateTimeStr(editing.ts) }))}`
-    : `🕒 <b>${esc(t('when_now', { t: dateTimeStr(Date.now()) }))}</b><br><span class="small muted">${esc(t('when_now_sub'))}</span>`;
+    ? `🕒 ${esc(t('when_saved', { t: dateTimeStr(editing.ts) }))}${editing.late ? ` · ✎ ${esc(t('added_later'))}` : ''}`
+    : pastMode
+      ? `🕒 <b>${esc(t('past_title'))}</b><br><button type="button" class="linkbtn" data-past="off">${esc(t('past_use_now'))}</button>`
+      : `🕒 <b>${esc(t('when_now', { t: dateTimeStr(Date.now()) }))}</b><br><span class="small muted">${esc(t('when_now_sub'))}</span><br><button type="button" class="linkbtn" data-past="on">${esc(t('past_link'))}</button>`;
 }
-function openEntry({ id, slot } = {}) {
+function openEntry({ id, slot, day } = {}) {
+  pickOpen = false; timeTouched = false;
+  pastMode = !id && !!day && day !== todayKey() && day >= minBackfillDay();
+  pastDay = pastMode ? day : todayKey();
   editing = id ? db.readings.find(r => r.id === id) : null;
   $('#entryTitle').textContent = editing ? t('edit_reading') : t('new_reading');
   $('#fDel').classList.toggle('hidden', !editing);
@@ -1194,7 +1275,7 @@ function openEntry({ id, slot } = {}) {
     selSlot = slot || suggestSlot();
     $('#fVal').value = ''; $('#fNote').value = '';
   }
-  renderSlotChips(); updateStatus(); renderWhen();
+  renderSlotChips(); updateStatus(); renderWhen(); renderPast();
   clearInterval(whenTimer); if (!editing) whenTimer = setInterval(renderWhen, 15000);
   dlg.showModal();
   if (!editing) setTimeout(() => $('#fVal').focus(), 60);
@@ -1211,7 +1292,7 @@ function updateStatus() {
   el.textContent = stText(c) + (c === 'low' ? t('low_advice') : '');
   el.className = 'c-' + c;
 }
-$('#fSlots').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; selSlot = b.dataset.slot; renderSlotChips(); updateStatus(); });
+$('#fSlots').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; selSlot = b.dataset.slot; renderSlotChips(); updateStatus(); if (pastMode && !timeTouched) $('#fTime').value = defaultTime(selSlot, pastDay); });
 $('#fVal').addEventListener('input', updateStatus);
 $('#fCancel').addEventListener('click', () => dlg.close());
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
@@ -1226,8 +1307,29 @@ $('#entryForm').addEventListener('submit', e => {
   const mg = Math.round(toMg(v) * 10) / 10;
   if (mg < 10 || mg > 800) { toast(t('value_off', { u: unitLabel() })); return; }
   // New readings are stamped with the phone's current date & time; edits keep their original time.
-  const ts = editing ? editing.ts : Date.now();
+  // "Earlier reading" mode lets the user pick a date in the last 7 days and a time that has already passed.
+  let ts, late = false;
+  if (editing) ts = editing.ts;
+  else if (pastMode) {
+    const tm = $('#fTime').value;
+    if (!/^\d{2}:\d{2}$/.test(tm)) { toast(t('pick_time_past')); return; }
+    if (!pastDay || pastDay < minBackfillDay() || pastDay > todayKey()) { toast(t('past_range')); return; }
+    const d = keyToDate(pastDay); const [hh, mm] = tm.split(':').map(Number); d.setHours(hh, mm, 0, 0);
+    ts = d.getTime();
+    if (ts > Date.now()) { toast(t('no_future')); return; }
+    late = true;
+  } else ts = Date.now();
+  // Same slot already filled that day? Ask whether to replace it or keep both.
+  if (!editing && selSlot !== 'random') {
+    const dk = dayKey(ts), ex = db.readings.filter(r => r.slot === selSlot && dayKey(r.ts) === dk);
+    if (ex.length) {
+      const last = ex[ex.length - 1];
+      if (confirm(t('dup_confirm', { v: fmt(last.mg), u: unitLabel(), slot: slotLabel(selSlot), d: shortDate(keyToDate(dk)) })))
+        db.readings = db.readings.filter(r => !ex.includes(r));
+    }
+  }
   const rec = { mg, ts, slot: selSlot, note: $('#fNote').value.trim() };
+  if (late) rec.late = true;
   const beforePct = dayStats(byDay().get(todayKey()) || []).pct;
   let savedId;
   if (editing) { Object.assign(editing, rec); savedId = editing.id; }
@@ -1262,7 +1364,7 @@ document.querySelector('main').addEventListener('click', e => {
   const em = e.target.closest('[data-editmed]'); if (em) { openMed(em.dataset.editmed); return; }
   if (e.target.closest('#notifBtn')) { toggleNotify(); return; }
   const ed = e.target.closest('[data-edit]'); if (ed) { openEntry({ id: ed.dataset.edit }); return; }
-  const nw = e.target.closest('[data-new]'); if (nw) { openEntry({ slot: nw.dataset.new }); return; }
+  const nw = e.target.closest('[data-new]'); if (nw) { openEntry({ slot: nw.dataset.new, day: nw.dataset.day }); return; }
   const rg = e.target.closest('[data-range]');
   if (rg) { range = rg.dataset.range; try { localStorage.setItem(KEY + '.range', range); } catch (er) {} renderSheet(); animateIn($('#v-sheet')); }
 });

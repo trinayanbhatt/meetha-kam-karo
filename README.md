@@ -14,8 +14,12 @@ before each meal, 2 hours after each meal, and random checks during the day.
   between English and Hindi. Phones set to Hindi start in Hindi.
 - **Automatic date & time:** a new reading is stamped with the phone's current
   date and time when you tap Save, so there's nothing to type. Editing a reading
-  keeps its original time. Past days in the Timesheet can't be filled in later;
-  only today's empty cells open the form.
+  keeps its original time.
+- **Missed a reading?** Tap "Missed one? Add an earlier reading" in the Add
+  form (Today / Yesterday / pick a date, with a suggested time), or tap an empty
+  Timesheet cell from the last 7 days. Future times and anything older than 7
+  days are blocked. Backfilled readings are marked ✎ and exported as "Added
+  later". If that slot already has a reading, you're asked to replace or keep both.
 
 - **Today:** a progress bar for today's scheduled readings (e.g. 3 / 6), a
   daily streak, and a reminder card showing when the 2-hour after-meal reading
