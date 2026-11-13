@@ -2,7 +2,7 @@
 
 *"Eat less sweet!" — the line every caring Indian mom says. Your sugar's caring (and slightly naggy) buddy.*
 
-Live at **https://trinayanbhatt.github.io/sugar-log/**
+Live at **https://trinayanbhatt.github.io/meetha-kam-karo/**
 
 A small offline app for logging blood sugar readings on an Android phone:
 before each meal, 2 hours after each meal, and random checks during the day.
